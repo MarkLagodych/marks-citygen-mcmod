@@ -33,11 +33,14 @@ public final class STTensor2d extends DMatrix2 {
     }
 
     /// Similar to {@link #fromPrimaryDirection}, but takes polar coordinates instead of Cartesians.
+    ///
+    /// @param angle Must be in the range [0, 2π)
+    /// @param magnitude Must be >= 0
     public static STTensor2d fromPolar(double angle, double magnitude) {
-        if (magnitude < 0) throw new IllegalArgumentException("Magnitude must be >=0");
-
         if (angle < 0 || angle >= 2 * Math.PI)
             throw new IllegalArgumentException("Angle must be in the range [0, 2π)");
+
+        if (magnitude < 0) throw new IllegalArgumentException("Magnitude must be >=0");
 
         var x = Math.cos(2 * angle) * magnitude;
         var y = Math.sin(2 * angle) * magnitude;
@@ -47,6 +50,7 @@ public final class STTensor2d extends DMatrix2 {
     /// Constructs a tensor from a primary direction vector.
     public static STTensor2d fromPrimaryDirection(DMatrix2 vector) {
         var angle = Math.atan2(vector.a2, vector.a1);
+        angle = (angle + 2 * Math.PI) % (2 * Math.PI); // Normalize to [0, 2π)
         var magnitude = Math.hypot(vector.a1, vector.a2);
         return fromPolar(angle, magnitude);
     }

@@ -15,21 +15,22 @@ public final class SumField2d implements TensorField2d {
         this.weights = weights;
     }
 
-    public class Builder {
+    public static class Builder {
         private final ArrayList<TensorField2d> fields = new ArrayList<>();
         private final ArrayList<DMatrix2> centers = new ArrayList<>();
         private final ArrayList<Double> weights = new ArrayList<>();
 
-        public void add(TensorField2d field, DMatrix2 center, double weight) {
+        public Builder add(TensorField2d field, DMatrix2 center, double weight) {
             fields.add(field);
             centers.add(center);
             weights.add(weight);
+            return this;
         }
 
         public SumField2d build() {
             return new SumField2d(
-                    (TensorField2d[]) fields.toArray(),
-                    (DMatrix2[]) centers.toArray(),
+                    fields.toArray(TensorField2d[]::new),
+                    centers.toArray(DMatrix2[]::new),
                     weights.stream().mapToDouble(x -> x).toArray());
         }
     }

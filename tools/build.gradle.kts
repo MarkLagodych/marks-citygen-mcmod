@@ -17,7 +17,7 @@ dependencies {
     implementation("org.processing:core:4.5.6")
 }
 
-listOf("VisualizeWFC2D").forEach { toolName ->
+listOf("VisualizeWFC2D", "VisualizeTensorField2d").forEach { toolName ->
     tasks.register<JavaExec>(toolName) {
         description = "Run the $toolName executable."
         group = "tools"
