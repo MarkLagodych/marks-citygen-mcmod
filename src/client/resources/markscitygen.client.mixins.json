@@ -1,6 +1,6 @@
 {
     "required": true,
-    "package": "org.ecumenopolismc.client.mixin",
+    "package": "org.markscitygen.client.mixin",
     "compatibilityLevel": "JAVA_25",
     "client": [
         "ExampleClientMixin"

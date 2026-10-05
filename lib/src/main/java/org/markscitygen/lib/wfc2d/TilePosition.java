@@ -1,4 +1,4 @@
-package org.ecumenopolismc.lib.wfc2d;
+package org.markscitygen.lib.wfc2d;
 
 public record TilePosition(int row, int col) {
     TilePosition above() {

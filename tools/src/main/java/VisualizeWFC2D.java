@@ -7,8 +7,8 @@ Controls:
 */
 
 import java.util.Arrays;
-import org.ecumenopolismc.lib.wfc2d.MapSize;
-import org.ecumenopolismc.lib.wfc2d.WFC2D;
+import org.markscitygen.lib.wfc2d.MapSize;
+import org.markscitygen.lib.wfc2d.WFC2D;
 import processing.core.PApplet;
 
 public class VisualizeWFC2D extends PApplet {

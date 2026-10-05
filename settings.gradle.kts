@@ -10,6 +10,6 @@ pluginManagement {
 }
 
 // Should match the mod ID
-rootProject.name = "ecumenopolismc"
+rootProject.name = "marks-citygen"
 
 include("lib", "tools")

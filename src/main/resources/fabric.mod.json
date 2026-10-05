@@ -1,31 +1,31 @@
 {
     "schemaVersion": 1,
-    "id": "ecumenopolismc",
+    "id": "marks-citygen",
     "version": "${version}",
-    "name": "Ecumenopolis",
+    "name": "Mark's Citygen",
     "description": "Generates large multi-level cities",
     "authors": [
         "Mark Lagodych <lgd.mrk@outlook.com>"
     ],
     "contact": {
-        "homepage": "https://github.com/MarkLagodych/EcumenopolisMC",
-        "sources": "https://github.com/MarkLagodych/EcumenopolisMC"
+        "homepage": "https://github.com/MarkLagodych/marks-citygen-mcmod",
+        "sources": "https://github.com/MarkLagodych/marks-citygen-mcmod"
     },
     "license": "LGPL-3.0-only",
-    "icon": "assets/ecumenopolismc/icon.png",
+    "icon": "assets/marks-citygen/icon.png",
     "environment": "*",
     "entrypoints": {
         "main": [
-            "org.ecumenopolismc.EcumenopolisMod"
+            "org.markscitygen.MarksCitygenMod"
         ],
         "client": [
-            "org.ecumenopolismc.client.EcumenopolisClient"
+            "org.markscitygen.client.MarksCitygenClient"
         ]
     },
     "mixins": [
-        "ecumenopolismc.mixins.json",
+        "marks-citygen.mixins.json",
         {
-            "config": "ecumenopolismc.client.mixins.json",
+            "config": "marks-citygen.client.mixins.json",
             "environment": "client"
         }
     ],

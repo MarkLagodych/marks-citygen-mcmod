@@ -1,14 +1,24 @@
-allprojects {
-    group = "org.ecumenopolismc"
-    version = "1.0.0"
-}
-
 plugins {
     id("java")
     id("maven-publish")
     id("net.fabricmc.fabric-loom") version "1.17-SNAPSHOT"
-    id("com.diffplug.spotless") version "8.10.1"
+    id("com.diffplug.spotless") version "8.10.1" apply false
 }
+
+allprojects {
+    group = "org.markscitygen"
+    version = "1.0.0"
+
+    apply(plugin = "com.diffplug.spotless")
+    plugins.withId("com.diffplug.spotless") {
+        configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+            java {
+                googleJavaFormat().aosp() // Android Open Source Project style
+            }
+        }
+    }
+}
+
 
 dependencies {
     implementation(project(":lib"))
@@ -19,18 +29,12 @@ dependencies {
     implementation("net.fabricmc.fabric-api:fabric-api:0.156.0+26.2")
 }
 
-spotless {
-    java {
-        googleJavaFormat().aosp() // Android Open Source Project style
-    }
-}
-
 // Fabric mod configuration
 loom {
     splitEnvironmentSourceSets()
 
     mods {
-        register("ecumenopolismc") {
+        register("marks-citygen") {
             sourceSet(sourceSets.main.get())
             sourceSet(sourceSets.getByName("client"))
         }

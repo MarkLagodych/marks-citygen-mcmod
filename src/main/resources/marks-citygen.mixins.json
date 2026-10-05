@@ -1,6 +1,6 @@
 {
     "required": true,
-    "package": "org.ecumenopolismc.mixin",
+    "package": "org.markscitygen.mixin",
     "compatibilityLevel": "JAVA_25",
     "mixins": [
         "ExampleMixin"

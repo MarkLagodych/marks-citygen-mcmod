@@ -1,4 +1,4 @@
-package org.ecumenopolismc.client.mixin;
+package org.markscitygen.client.mixin;
 
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;

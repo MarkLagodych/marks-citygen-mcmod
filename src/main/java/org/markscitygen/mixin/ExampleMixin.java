@@ -1,4 +1,4 @@
-package org.ecumenopolismc.mixin;
+package org.markscitygen.mixin;
 
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
