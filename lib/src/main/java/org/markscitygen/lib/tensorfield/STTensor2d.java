@@ -20,6 +20,10 @@ import org.ejml.data.DMatrix2;
 ///
 /// To avoid data duplication, only the X and Y components are stored.
 public final class STTensor2d extends DMatrix2 {
+    public STTensor2d() {
+        super();
+    }
+
     public STTensor2d(double x, double y) {
         super(x, y);
     }
@@ -54,7 +58,7 @@ public final class STTensor2d extends DMatrix2 {
         return new DMatrix2(length * Math.cos(angle), length * Math.sin(angle));
     }
 
-    /// @return The secondary eigenvector of the tensor
+    /// @return The minor eigenvector of the tensor
     public DMatrix2 getSecondaryDirection() {
         var angle = 0.5 * Math.atan2(a2, a1) + Math.PI / 2;
         var length = Math.hypot(a1, a2);
