@@ -7,23 +7,23 @@ import org.ejml.dense.fixed.CommonOps_DDF2;
 public final class SumField2d implements TensorField2d {
     private final TensorField2d[] fields;
     private final DMatrix2[] centers;
-    private final double[] weights;
+    private final double[] decayConsts;
 
-    public SumField2d(TensorField2d[] fields, DMatrix2[] centers, double[] weights) {
+    public SumField2d(TensorField2d[] fields, DMatrix2[] centers, double[] decayConsts) {
         this.fields = fields;
         this.centers = centers;
-        this.weights = weights;
+        this.decayConsts = decayConsts;
     }
 
     public static class Builder {
         private final ArrayList<TensorField2d> fields = new ArrayList<>();
         private final ArrayList<DMatrix2> centers = new ArrayList<>();
-        private final ArrayList<Double> weights = new ArrayList<>();
+        private final ArrayList<Double> decayConsts = new ArrayList<>();
 
-        public Builder add(TensorField2d field, DMatrix2 center, double weight) {
+        public Builder add(TensorField2d field, DMatrix2 center, double decayConst) {
             fields.add(field);
             centers.add(center);
-            weights.add(weight);
+            decayConsts.add(decayConst);
             return this;
         }
 
@@ -31,7 +31,7 @@ public final class SumField2d implements TensorField2d {
             return new SumField2d(
                     fields.toArray(TensorField2d[]::new),
                     centers.toArray(DMatrix2[]::new),
-                    weights.stream().mapToDouble(x -> x).toArray());
+                    decayConsts.stream().mapToDouble(x -> x).toArray());
         }
     }
 
@@ -42,11 +42,11 @@ public final class SumField2d implements TensorField2d {
         for (int i = 0; i < fields.length; i++) {
             var tensor = fields[i].getTensorAt(point);
 
-            // tensor *= exp(- weight ⋅ ‖point-center‖²)
+            // tensor *= exp(- decayConst ⋅ ‖point-center‖²)
             var direction = new DMatrix2();
             CommonOps_DDF2.subtract(point, centers[i], direction);
             var normSquared = CommonOps_DDF2.dot(direction, direction);
-            var k = Math.exp(-weights[i] * normSquared);
+            var k = Math.exp(-decayConsts[i] * normSquared);
             CommonOps_DDF2.scale(k, tensor, tensor);
 
             CommonOps_DDF2.addEquals(result, tensor);

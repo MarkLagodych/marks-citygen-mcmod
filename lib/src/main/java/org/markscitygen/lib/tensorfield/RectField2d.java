@@ -11,6 +11,6 @@ public final class RectField2d implements TensorField2d {
 
     @Override
     public STTensor2d getTensorAt(DMatrix2 _point) {
-        return tensor.copy();
+        return new STTensor2d(tensor);
     }
 }
