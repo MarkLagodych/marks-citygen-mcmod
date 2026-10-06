@@ -10,15 +10,19 @@ public class VisualizeTensorField2d extends PApplet {
         PApplet.main(VisualizeTensorField2d.class, args);
     }
 
-    SumField2d field =
-            new SumField2d.Builder()
-                    .add(new RadialField2d(new DMatrix2(100, 100)), new DMatrix2(100, 100), 0.0008)
-                    .add(new RadialField2d(new DMatrix2(400, 100)), new DMatrix2(500, 100), 0.0008)
-                    .add(
-                            new RectField2d(STTensor2d.fromPrimaryDirection(new DMatrix2(5, 2))),
-                            new DMatrix2(0, 0),
-                            0)
-                    .build();
+    static final double ANGLE_STEP = Math.PI / 16;
+
+    double angle = 0;
+
+    SumField2d field = makeField(angle);
+
+    static SumField2d makeField(double angle) {
+        return new SumField2d.Builder()
+                .add(new RadialField2d(new DMatrix2(100, 100)), new DMatrix2(100, 100), 0.0008)
+                .add(new RadialField2d(new DMatrix2(400, 100)), new DMatrix2(500, 100), 0.0008)
+                .add(new RectField2d(STTensor2d.fromPolar(angle, 5)), new DMatrix2(0, 0), 0)
+                .build();
+    }
 
     @Override
     public void settings() {
@@ -52,6 +56,17 @@ public class VisualizeTensorField2d extends PApplet {
                         (float) Math.round(x - direction.a1),
                         (float) Math.round(y - direction.a2));
             }
+        }
+    }
+
+    @Override
+    public void keyPressed() {
+        if (keyCode == UP) {
+            angle += ANGLE_STEP;
+            field = makeField(angle);
+        } else if (keyCode == DOWN) {
+            angle -= ANGLE_STEP;
+            field = makeField(angle);
         }
     }
 }
