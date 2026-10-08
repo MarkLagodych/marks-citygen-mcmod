@@ -1,5 +1,6 @@
 package org.markscitygen.lib.tensorfield;
 
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import java.util.ArrayList;
 import org.markscitygen.lib.Vec2;
 
@@ -17,7 +18,7 @@ public final class SumField2 implements TensorField2 {
     public static class Builder {
         private final ArrayList<TensorField2> fields = new ArrayList<>();
         private final ArrayList<Vec2> centers = new ArrayList<>();
-        private final ArrayList<Double> decayConsts = new ArrayList<>();
+        private final DoubleArrayList decayConsts = new DoubleArrayList();
 
         public Builder add(TensorField2 field, Vec2 center, double decayConst) {
             fields.add(field);
@@ -30,7 +31,7 @@ public final class SumField2 implements TensorField2 {
             return new SumField2(
                     fields.toArray(TensorField2[]::new),
                     centers.toArray(Vec2[]::new),
-                    decayConsts.stream().mapToDouble(x -> x).toArray());
+                    decayConsts.toDoubleArray());
         }
     }
 
