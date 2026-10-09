@@ -91,6 +91,21 @@ public final class Vec2 {
                 ak * a.y + bk * b.y + ck * c.y + dk * d.y + ek * e.y);
     }
 
+    public static Vec2 sum(double[] coeffs, Vec2[] vectors) {
+        if (coeffs.length != vectors.length) {
+            throw new IllegalArgumentException(
+                    "Coefficients and vectors must have the same length");
+        }
+
+        double x = 0;
+        double y = 0;
+        for (int i = 0; i < coeffs.length; i++) {
+            x += coeffs[i] * vectors[i].x;
+            y += coeffs[i] * vectors[i].y;
+        }
+        return new Vec2(x, y);
+    }
+
     /// @return Polar angle in radians, in the range (-π, π]
     public double polarAngle() {
         return Math.atan2(y, x);

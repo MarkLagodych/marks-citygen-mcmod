@@ -17,13 +17,14 @@ public class VisualizeRoadGen extends PApplet {
             new SumField2.Builder()
                     .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 0.0008)
                     .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 0.0008)
+                    .add(new RadialField2(new Vec2(300, 300)), new Vec2(300, 300), 0.003)
                     .add(
                             new RectField2(STTensor2.fromPrimaryDirectionPolar(Math.PI / 6, 0.5)),
                             new Vec2(0, 0),
                             0)
                     .add(
                             new RectField2(STTensor2.fromPrimaryDirectionPolar(Math.PI / 3, 0.5)),
-                            new Vec2(500, 500),
+                            new Vec2(500, 400),
                             0.0008)
                     .build();
 
@@ -31,9 +32,14 @@ public class VisualizeRoadGen extends PApplet {
 
     static ArrayList<Path2> genRoads() {
         var gen =
-                new RoadGenerator.Builder(field).bounds(new Vec2(800, 600)).maxLength(600).build();
+                new RoadGenerator.Builder(field)
+                        .bounds(new Vec2(800, 600))
+                        .maxLength(600)
+                        .maxSteps(1200)
+                        .stepSize(0.5)
+                        .build();
         gen.generateRoads(100);
-        return gen.getRoads();
+        return gen.getGeneratedRoads();
     }
 
     @Override
@@ -55,9 +61,9 @@ public class VisualizeRoadGen extends PApplet {
         strokeWeight(2);
 
         for (var road : roads) {
-            for (int i = 0; i < road.points.size() - 1; i++) {
-                var point = road.points.get(i);
-                var nextPoint = road.points.get(i + 1);
+            for (int i = 0; i < road.size() - 1; i++) {
+                var point = road.get(i);
+                var nextPoint = road.get(i + 1);
                 line((float) point.x, (float) point.y, (float) nextPoint.x, (float) nextPoint.y);
             }
         }
