@@ -1,16 +1,21 @@
 package org.markscitygen.lib.tensorfield;
 
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.OutVec2;
 
 public final class RadialField2 implements TensorField2 {
-    private Vec2 center;
+    private final double centerX;
+    private final double centerY;
 
-    public RadialField2(Vec2 center) {
-        this.center = center;
+    public RadialField2(double centerX, double centerY) {
+        this.centerX = centerX;
+        this.centerY = centerY;
     }
 
     @Override
-    public STTensor2 getTensorAt(Vec2 point) {
-        return STTensor2.fromPrimaryDirection(point.directionTo(center));
+    public void getTensorAt(double x, double y, OutVec2 outTensor) {
+        // Now (x,y) stores the direction to the center
+        x -= centerX;
+        y -= centerY;
+        STTensor2Math.fromMajorEigenvector(x, y, outTensor);
     }
 }

@@ -1,16 +1,25 @@
 package org.markscitygen.lib.tensorfield;
 
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.OutVec2;
 
 public final class RectField2 implements TensorField2 {
-    private final STTensor2 tensor;
+    private final double tensorX;
+    private final double tensorY;
 
-    public RectField2(STTensor2 tensor) {
-        this.tensor = tensor;
+    public RectField2(double tensorX, double tensorY) {
+        this.tensorX = tensorX;
+        this.tensorY = tensorY;
+    }
+
+    public static RectField2 fromPrimaryDirection(double vectorX, double vectorY) {
+        var tensor = new OutVec2();
+        STTensor2Math.fromMajorEigenvector(vectorX, vectorY, tensor);
+        return new RectField2(tensor.x, tensor.y);
     }
 
     @Override
-    public STTensor2 getTensorAt(Vec2 point) {
-        return new STTensor2(tensor);
+    public void getTensorAt(double x, double y, OutVec2 outTensor) {
+        outTensor.x = tensorX;
+        outTensor.y = tensorY;
     }
 }

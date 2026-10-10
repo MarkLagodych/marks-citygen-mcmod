@@ -1,7 +1,7 @@
 package org.markscitygen.lib.tensorfield;
 
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.OutVec2;
 
 public interface TensorField2 {
-    STTensor2 getTensorAt(Vec2 point);
+    void getTensorAt(double x, double y, OutVec2 outTensor);
 }

@@ -1,7 +1,7 @@
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.OutVec2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
-import org.markscitygen.lib.tensorfield.STTensor2;
+import org.markscitygen.lib.tensorfield.STTensor2Math;
 import org.markscitygen.lib.tensorfield.SumField2;
 import processing.core.PApplet;
 
@@ -17,13 +17,13 @@ public class VisualizeTensorField2d extends PApplet {
     SumField2 field = makeField(angle);
 
     static SumField2 makeField(double angle) {
+        var t = new OutVec2();
+        STTensor2Math.fromMajorEigenvectorPolar(angle, 5, t);
+
         return new SumField2.Builder()
-                .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 0.0008)
-                .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 0.0008)
-                .add(
-                        new RectField2(STTensor2.fromPrimaryDirectionPolar(angle, 5)),
-                        new Vec2(0, 0),
-                        0)
+                .add(new RadialField2(100, 100), 100, 100, 0.0008)
+                .add(new RadialField2(400, 100), 500, 100, 0.0008)
+                .add(new RectField2(t.x, t.y), 0, 0, 0)
                 .build();
     }
 
@@ -44,20 +44,24 @@ public class VisualizeTensorField2d extends PApplet {
         stroke(0xffffffff);
         strokeWeight(2);
 
+        var tensor = new OutVec2();
+        var dir = new OutVec2();
+
         for (int x = 0; x < width; x += 20) {
             for (int y = 0; y < height; y += 20) {
-                var tensor = field.getTensorAt(new Vec2(x, y));
-                var direction = tensor.getPrimaryDirection();
+                field.getTensorAt(x, y, tensor);
+                STTensor2Math.getMajorEigenvector(tensor.x, tensor.y, dir);
+
                 line(
                         (float) x,
                         (float) y,
-                        (float) Math.round(x + direction.x),
-                        (float) Math.round(y + direction.y));
+                        (float) Math.round(x + dir.x),
+                        (float) Math.round(y + dir.y));
                 line(
                         (float) x,
                         (float) y,
-                        (float) Math.round(x - direction.x),
-                        (float) Math.round(y - direction.y));
+                        (float) Math.round(x - dir.x),
+                        (float) Math.round(y - dir.y));
             }
         }
     }

@@ -1,13 +1,15 @@
 package org.markscitygen.lib.tensorfield;
 
 import java.util.ArrayList;
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.OutVec2;
+import org.markscitygen.lib.Vec2Math;
 
 public final class RoadGenerator {
     final ArrayList<Path2> roads = new ArrayList<>();
 
     final TensorField2 field;
-    final Vec2 bounds;
+    final double width;
+    final double height;
     final double maxLength;
     final double stepSize;
     final int maxSteps;
@@ -15,7 +17,8 @@ public final class RoadGenerator {
 
     private RoadGenerator(Builder builder) {
         this.field = builder.field;
-        this.bounds = builder.bounds;
+        this.width = builder.width;
+        this.height = builder.height;
         this.maxLength = builder.maxLength;
         this.minGrowOffset = builder.minGrowOffset;
         this.maxSteps = builder.maxSteps;
@@ -24,7 +27,8 @@ public final class RoadGenerator {
 
     public static final class Builder {
         private final TensorField2 field;
-        private Vec2 bounds = new Vec2(1000, 1000);
+        private double width = 1000;
+        private double height = 1000;
         private double maxLength = 1000;
         private double minGrowOffset = 0.03;
         private int maxSteps = 10000;
@@ -35,8 +39,9 @@ public final class RoadGenerator {
         }
 
         /// The input bouding box size
-        public Builder bounds(Vec2 bounds) {
-            this.bounds = bounds;
+        public Builder bounds(double width, double height) {
+            this.width = width;
+            this.height = height;
             return this;
         }
 
@@ -80,65 +85,112 @@ public final class RoadGenerator {
         }
     }
 
-    private Vec2 getDirectionAt(Vec2 point, boolean isSecondary, Vec2 prevDirection) {
-        var tensor = field.getTensorAt(point);
-        var direction = tensor.getPrimaryDirection();
-        if (isSecondary) direction.rotatePiHalf();
-        direction.alignWith(prevDirection);
-        return direction;
+    private void getDirectionAt(
+            boolean isSecondary,
+            double x,
+            double y,
+            double lastDirectionX,
+            double lastDirectionY,
+            OutVec2 outDirection) {
+
+        // Use outDirection as a temporary variable to store the tensor
+        field.getTensorAt(x, y, outDirection);
+        STTensor2Math.getMajorEigenvector(outDirection.x, outDirection.y, outDirection);
+
+        var dirX = outDirection.x;
+        var dirY = outDirection.y;
+
+        if (isSecondary) {
+            // Rotate by PI/2
+            var temp = dirX;
+            dirX = -dirY;
+            dirY = temp;
+        }
+
+        if (!Vec2Math.isAligned(dirX, dirY, lastDirectionX, lastDirectionY)) {
+            dirX = -dirX;
+            dirY = -dirY;
+        }
+
+        outDirection.x = dirX;
+        outDirection.y = dirY;
     }
 
     public void generateRoad() {
         var path = new Path2();
 
-        var seed = Vec2.randomBounded(bounds);
-        path.add(seed);
+        path.add(Math.random() * width, Math.random() * height);
 
         var isSecondary = Math.random() < 0.5;
 
         double totalLength = 0;
-        Vec2 lastDirection = Vec2.randomUnit();
+
+        var randAngle = Math.random() * 2 * Math.PI;
+        var lastDirectionX = Math.cos(randAngle);
+        var lastDirectionY = Math.sin(randAngle);
+
+        var dir = new OutVec2();
+
         for (int steps = 0; steps < maxSteps; steps++) {
             // Runge-Kutta 4th order integration step
-            var lastPoint = path.getLast();
-            var k1 = getDirectionAt(lastPoint, isSecondary, lastDirection);
-            var p1 = Vec2.sum(lastPoint, stepSize / 2, k1);
-            var k2 = getDirectionAt(p1, isSecondary, lastDirection);
-            var p2 = Vec2.sum(lastPoint, stepSize / 2, k2);
-            var k3 = getDirectionAt(p2, isSecondary, lastDirection);
-            var p3 = Vec2.sum(lastPoint, stepSize, k3);
-            var k4 = getDirectionAt(p3, isSecondary, lastDirection);
-            var nextPoint =
-                    Vec2.sum(
-                            lastPoint,
-                            stepSize / 6,
-                            k1,
-                            stepSize / 3,
-                            k2,
-                            stepSize / 3,
-                            k3,
-                            stepSize / 6,
-                            k4);
 
-            var direction = lastPoint.directionTo(nextPoint);
+            var lastPointX = path.getX(path.size() - 1);
+            var lastPointY = path.getY(path.size() - 1);
 
-            var directionLength = direction.length();
+            var nextPointX = lastPointX;
+            var nextPointY = lastPointY;
+
+            getDirectionAt(
+                    isSecondary, lastPointX, lastPointY, lastDirectionX, lastDirectionY, dir);
+
+            nextPointX += stepSize / 6 * dir.x;
+            nextPointY += stepSize / 6 * dir.y;
+
+            var p1X = lastPointX + stepSize / 2 * dir.x;
+            var p1Y = lastPointY + stepSize / 2 * dir.y;
+
+            getDirectionAt(isSecondary, p1X, p1Y, lastDirectionX, lastDirectionY, dir);
+
+            nextPointX += stepSize / 3 * dir.x;
+            nextPointY += stepSize / 3 * dir.y;
+
+            var p2X = lastPointX + stepSize / 2 * dir.x;
+            var p2Y = lastPointY + stepSize / 2 * dir.y;
+
+            getDirectionAt(isSecondary, p2X, p2Y, lastDirectionX, lastDirectionY, dir);
+
+            nextPointX += stepSize / 3 * dir.x;
+            nextPointY += stepSize / 3 * dir.y;
+
+            var p3X = lastPointX + stepSize * dir.x;
+            var p3Y = lastPointY + stepSize * dir.y;
+
+            getDirectionAt(isSecondary, p3X, p3Y, lastDirectionX, lastDirectionY, dir);
+
+            nextPointX += stepSize / 6 * dir.x;
+            nextPointY += stepSize / 6 * dir.y;
+
+            var dirX = nextPointX - lastPointX;
+            var dirY = nextPointY - lastPointY;
+
+            var directionLength = Vec2Math.length(dirX, dirY);
             if (directionLength < minGrowOffset) {
                 break;
             }
 
-            if (!nextPoint.isInBounds(bounds)) {
+            if (!Vec2Math.isInBounds(nextPointX, nextPointY, width, height)) {
                 break;
             }
 
-            path.add(nextPoint);
+            path.add(nextPointX, nextPointY);
 
             totalLength += directionLength;
             if (totalLength >= maxLength) {
                 break;
             }
 
-            lastDirection = direction;
+            lastDirectionX = dirX;
+            lastDirectionY = dirY;
         }
 
         roads.add(path);

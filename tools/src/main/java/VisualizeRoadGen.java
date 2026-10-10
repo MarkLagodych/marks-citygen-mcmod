@@ -1,10 +1,10 @@
 import java.util.ArrayList;
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.OutVec2;
 import org.markscitygen.lib.tensorfield.Path2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
 import org.markscitygen.lib.tensorfield.RoadGenerator;
-import org.markscitygen.lib.tensorfield.STTensor2;
+import org.markscitygen.lib.tensorfield.STTensor2Math;
 import org.markscitygen.lib.tensorfield.SumField2;
 import processing.core.PApplet;
 
@@ -13,27 +13,31 @@ public class VisualizeRoadGen extends PApplet {
         PApplet.main(VisualizeRoadGen.class, args);
     }
 
-    static final SumField2 field =
-            new SumField2.Builder()
-                    .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 0.0008)
-                    .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 0.0008)
-                    .add(new RadialField2(new Vec2(300, 300)), new Vec2(300, 300), 0.003)
-                    .add(
-                            new RectField2(STTensor2.fromPrimaryDirectionPolar(Math.PI / 6, 0.5)),
-                            new Vec2(0, 0),
-                            0)
-                    .add(
-                            new RectField2(STTensor2.fromPrimaryDirectionPolar(Math.PI / 3, 0.5)),
-                            new Vec2(500, 400),
-                            0.0008)
-                    .build();
+    static final SumField2 field = makeField();
+
+    static SumField2 makeField() {
+        var b =
+                new SumField2.Builder()
+                        .add(new RadialField2(100, 100), 100, 100, 0.0008)
+                        .add(new RadialField2(400, 100), 500, 100, 0.0008)
+                        .add(new RadialField2(300, 300), 300, 300, 0.003);
+
+        var t = new OutVec2();
+        STTensor2Math.fromMajorEigenvectorPolar(Math.PI / 6, 0.5, t);
+        b.add(new RectField2(t.x, t.y), 0, 0, 0);
+
+        STTensor2Math.fromMajorEigenvectorPolar(Math.PI / 3, 0.5, t);
+        b.add(new RectField2(t.x, t.y), 500, 400, 0.0008);
+
+        return b.build();
+    }
 
     ArrayList<Path2> roads = genRoads();
 
     static ArrayList<Path2> genRoads() {
         var gen =
                 new RoadGenerator.Builder(field)
-                        .bounds(new Vec2(800, 600))
+                        .bounds(800, 600)
                         .maxLength(600)
                         .maxSteps(1200)
                         .stepSize(0.5)
@@ -69,9 +73,11 @@ public class VisualizeRoadGen extends PApplet {
 
         for (var road : roads) {
             for (int i = 0; i < road.size() - 1; i++) {
-                var point = road.get(i);
-                var nextPoint = road.get(i + 1);
-                line((float) point.x, (float) point.y, (float) nextPoint.x, (float) nextPoint.y);
+                var pointX = road.getX(i);
+                var pointY = road.getY(i);
+                var nextPointX = road.getX(i + 1);
+                var nextPointY = road.getY(i + 1);
+                line((float) pointX, (float) pointY, (float) nextPointX, (float) nextPointY);
             }
         }
     }
