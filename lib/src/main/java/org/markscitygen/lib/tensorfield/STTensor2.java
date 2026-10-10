@@ -37,6 +37,7 @@ public final class STTensor2 {
     /// Constructs a tensor from a primary direction vector.
     public static STTensor2 fromPrimaryDirection(Vec2 vector) {
         var l = vector.length();
+        if (l < 1e-10) return new STTensor2(0, 0);
 
         // cos(a)
         var cosA = vector.x / l;
@@ -54,6 +55,8 @@ public final class STTensor2 {
     /// @return The major eigenvector of the tensor
     public Vec2 getPrimaryDirection() {
         var l = xy.length();
+        if (l < 1e-10) return new Vec2(0, 0);
+
         // cos(2a) / 2
         var halfCos2A = 0.5 * xy.x / l;
 
