@@ -49,12 +49,24 @@ public final class STTensor2 {
 
     /// @return The major eigenvector of the tensor
     public Vec2 getPrimaryDirection() {
-        return Vec2.fromPolar(xy.polarAngle() / 2, xy.length());
+        // return Vec2.fromPolar(xy.polarAngle() / 2, xy.length());
+        var l = xy.length();
+        var x = xy.x / l;
+        var newX = Math.sqrt(0.5 + 0.5 * x);
+        var newY = Math.sqrt(0.5 - 0.5 * x);
+        newX = Math.copySign(newX, xy.y);
+        return new Vec2(l * newX, l * newY);
     }
 
     /// @return The minor eigenvector of the tensor
     public Vec2 getSecondaryDirection() {
-        return Vec2.fromPolar(xy.polarAngle() / 2 + Math.PI / 2, xy.length());
+        // return Vec2.fromPolar(xy.polarAngle() / 2 + Math.PI / 2, xy.length());
+        var l = xy.length();
+        var x = xy.x / l;
+        var newX = Math.sqrt(0.5 + 0.5 * x);
+        var newY = Math.sqrt(0.5 - 0.5 * x);
+        newX = Math.copySign(newX, xy.y);
+        return new Vec2(-newY, newX);
     }
 
     public void add(STTensor2 other) {

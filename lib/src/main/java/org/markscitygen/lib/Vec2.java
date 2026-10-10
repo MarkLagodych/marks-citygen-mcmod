@@ -112,7 +112,8 @@ public final class Vec2 {
     }
 
     public double length() {
-        return Math.hypot(x, y);
+        // return Math.hypot(x, y);
+        return Math.sqrt(x * x + y * y);
     }
 
     public double lengthSquared() {
