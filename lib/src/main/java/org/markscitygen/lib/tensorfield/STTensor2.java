@@ -66,7 +66,7 @@ public final class STTensor2 {
         var newX = Math.sqrt(0.5 + 0.5 * x);
         var newY = Math.sqrt(0.5 - 0.5 * x);
         newX = Math.copySign(newX, xy.y);
-        return new Vec2(-newY, newX);
+        return new Vec2(l * -newY, l * newX);
     }
 
     public void add(STTensor2 other) {
