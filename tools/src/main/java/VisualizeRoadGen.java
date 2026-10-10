@@ -38,7 +38,14 @@ public class VisualizeRoadGen extends PApplet {
                         .maxSteps(1200)
                         .stepSize(0.5)
                         .build();
+
+        var time1 = System.nanoTime();
+
         gen.generateRoads(100);
+
+        var time2 = System.nanoTime();
+        System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");
+
         return gen.getGeneratedRoads();
     }
 
