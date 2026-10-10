@@ -34,7 +34,7 @@ public final class STTensor2 {
         this.xy = new Vec2(other.xy);
     }
 
-    /// Constructs a tensor from a primary direction vector.
+    /// Constructs a tensor from a major eigenvector.
     public static STTensor2 fromPrimaryDirection(Vec2 vector) {
         var l = vector.length();
         if (l < 1e-10) return new STTensor2(0, 0);
