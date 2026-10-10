@@ -2,7 +2,7 @@ package org.markscitygen.lib.tensorfield;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import java.util.ArrayList;
-import org.markscitygen.OutVec2;
+import org.markscitygen.lib.OutVec2;
 import org.markscitygen.lib.Vec2Math;
 
 public final class SumField2 implements TensorField2 {

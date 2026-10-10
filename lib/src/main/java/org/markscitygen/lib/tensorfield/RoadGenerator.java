@@ -1,7 +1,7 @@
 package org.markscitygen.lib.tensorfield;
 
 import java.util.ArrayList;
-import org.markscitygen.OutVec2;
+import org.markscitygen.lib.OutVec2;
 import org.markscitygen.lib.Vec2Math;
 
 public final class RoadGenerator {

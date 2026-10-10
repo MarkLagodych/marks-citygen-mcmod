@@ -1,6 +1,6 @@
 package org.markscitygen.lib.tensorfield;
 
-import org.markscitygen.OutVec2;
+import org.markscitygen.lib.OutVec2;
 import org.markscitygen.lib.Vec2Math;
 
 /// Math utilities for Symmetric Traceless 2D Tensors.
