@@ -91,13 +91,13 @@ public final class RoadGenerator {
     public void generateRoad() {
         var path = new Path2();
 
-        var seed = Vec2.randomBounded(bounds);
-        path.add(seed);
+        path.add(new Vec2(Math.random() * bounds.x, Math.random() * bounds.y));
 
         var isSecondary = Math.random() < 0.5;
 
         double totalLength = 0;
-        Vec2 lastDirection = Vec2.randomUnit();
+        Vec2 lastDirection = Vec2.fromPolarUnit(Math.random() * 2 * Math.PI);
+
         for (int steps = 0; steps < maxSteps; steps++) {
             // Runge-Kutta 4th order integration step
             var lastPoint = path.getLast();
@@ -123,6 +123,7 @@ public final class RoadGenerator {
             var direction = lastPoint.directionTo(nextPoint);
 
             var directionLength = direction.length();
+
             if (directionLength < minGrowOffset) {
                 break;
             }

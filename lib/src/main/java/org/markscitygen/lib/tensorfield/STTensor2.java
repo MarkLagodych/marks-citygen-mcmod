@@ -26,42 +26,47 @@ public final class STTensor2 {
         this.xy = new Vec2();
     }
 
-    private STTensor2(Vec2 xy) {
-        this.xy = xy;
+    private STTensor2(double x, double y) {
+        this.xy = new Vec2(x, y);
     }
 
     public STTensor2(STTensor2 other) {
         this.xy = new Vec2(other.xy);
     }
 
-    /// Similar to {@link #fromPrimaryDirection}, but takes polar coordinates instead of Cartesians.
-    ///
-    /// @param angle Any angle in radians
-    /// @param length Non-negative length
-    public static STTensor2 fromPrimaryDirectionPolar(double angle, double length) {
-        return new STTensor2(Vec2.fromPolar(angle * 2, length));
-    }
-
     /// Constructs a tensor from a primary direction vector.
     public static STTensor2 fromPrimaryDirection(Vec2 vector) {
         var l = vector.length();
-        var cosAngle = vector.x / l;
-        var sinAngle = vector.y / l;
-        return new STTensor2(
-                new Vec2(
-                        l * (2 * cosAngle * cosAngle - 1), // cos(2⋅angle)⋅length
-                        l * (2 * cosAngle * sinAngle))); // sin(2⋅angle)⋅length
+
+        // cos(a)
+        var cosA = vector.x / l;
+        // sin(a)
+        var sinA = vector.y / l;
+
+        // cos(2a) = 2⋅cos²(a) - 1
+        var cos2A = 2 * cosA * cosA - 1;
+        // sin(2a) = 2⋅cos(a)⋅sin(a)
+        var sin2A = 2 * cosA * sinA;
+
+        return new STTensor2(l * cos2A, l * sin2A);
     }
 
     /// @return The major eigenvector of the tensor
     public Vec2 getPrimaryDirection() {
-        // return Vec2.fromPolar(xy.polarAngle() / 2, xy.length());
         var l = xy.length();
-        var x = 0.5 * xy.x / l;
-        var newX = Math.sqrt(0.5 + x);
-        var newY = Math.sqrt(0.5 - x);
-        newX = Math.copySign(newX, xy.y);
-        return new Vec2(l * newX, l * newY);
+        // cos(2a) / 2
+        var halfCos2A = 0.5 * xy.x / l;
+
+        // cos(a) = ±√((1 + cos(2a)) / 2)
+        var cosA = Math.sqrt(0.5 + halfCos2A);
+        // sin(a) = ±√((1 - cos(2a)) / 2)
+        var sinA = Math.sqrt(0.5 - halfCos2A);
+        // Resolve sign ambiguity of sqrt
+        cosA = Math.copySign(cosA, xy.y);
+        // The sign of sin(a) does not need to be resolved.
+        // It would only lead to vector negation, but not change of direction.
+
+        return new Vec2(l * cosA, l * sinA);
     }
 
     public void add(STTensor2 other) {

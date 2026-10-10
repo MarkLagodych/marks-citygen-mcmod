@@ -19,11 +19,15 @@ public class VisualizeRoadGen extends PApplet {
                     .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 0.0008)
                     .add(new RadialField2(new Vec2(300, 300)), new Vec2(300, 300), 0.003)
                     .add(
-                            new RectField2(STTensor2.fromPrimaryDirectionPolar(Math.PI / 6, 0.5)),
+                            new RectField2(
+                                    STTensor2.fromPrimaryDirection(
+                                            Vec2.fromPolar(Math.PI / 6, 0.5))),
                             new Vec2(0, 0),
                             0)
                     .add(
-                            new RectField2(STTensor2.fromPrimaryDirectionPolar(Math.PI / 3, 0.5)),
+                            new RectField2(
+                                    STTensor2.fromPrimaryDirection(
+                                            Vec2.fromPolar(Math.PI / 3, 0.5))),
                             new Vec2(500, 400),
                             0.0008)
                     .build();

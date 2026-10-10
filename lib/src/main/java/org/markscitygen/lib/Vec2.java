@@ -19,14 +19,9 @@ public final class Vec2 {
         this.y = 0;
     }
 
-    /// @return A random vector with `x` in [0, bounds.x) and `y` in [0, bounds.y).
-    /// The half-open intervals are consistent with {@link Math#random()}.
-    public static Vec2 randomBounded(Vec2 bounds) {
-        return new Vec2(Math.random() * bounds.x, Math.random() * bounds.y);
-    }
-
-    public static Vec2 randomUnit() {
-        var angle = Math.random() * 2 * Math.PI;
+    /// @param angle Polar angle in radians (no restriction on range)
+    /// @return A unit vector with the given polar angle
+    public static Vec2 fromPolarUnit(double angle) {
         return new Vec2(Math.cos(angle), Math.sin(angle));
     }
 
@@ -106,13 +101,13 @@ public final class Vec2 {
         return new Vec2(x, y);
     }
 
+    /// This function uses {@link Math#atan2}, which is **very slow**!
     /// @return Polar angle in radians, in the range (-π, π]
     public double polarAngle() {
         return Math.atan2(y, x);
     }
 
     public double length() {
-        // return Math.hypot(x, y);
         return Math.sqrt(x * x + y * y);
     }
 
@@ -153,7 +148,9 @@ public final class Vec2 {
     }
 
     public double distanceTo(Vec2 otherPoint) {
-        return Math.hypot(this.x - otherPoint.x, this.y - otherPoint.y);
+        var dx = this.x - otherPoint.x;
+        var dy = this.y - otherPoint.y;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     public double distanceSquaredTo(Vec2 otherPoint) {
@@ -162,11 +159,17 @@ public final class Vec2 {
         return dx * dx + dy * dy;
     }
 
-    /// @return true if `this.x` is in [0, bounds.x) and `this.y` is in [0, bounds.y).
-    public boolean isInBounds(Vec2 bounds) {
-        return this.x >= 0 && this.x < bounds.x && this.y >= 0 && this.y < bounds.y;
+    /// @return true if `this.x` is in [0, max.x) and `this.y` is in [0, max.y).
+    public boolean isInBounds(Vec2 max) {
+        return this.x >= 0 && this.x < max.x && this.y >= 0 && this.y < max.y;
     }
 
+    /// @return true if `this.x` is in [min.x, max.x) and `this.y` is in [min.y, max.y).
+    public boolean isInBounds(Vec2 min, Vec2 max) {
+        return this.x >= min.x && this.x < max.x && this.y >= min.y && this.y < max.y;
+    }
+
+    /// Rotates the vector by π/2 radians (90 degrees) counterclockwise.
     public void rotatePiHalf() {
         var tmp = x;
         x = -y;

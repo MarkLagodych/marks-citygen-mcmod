@@ -21,7 +21,7 @@ public class VisualizeTensorField2d extends PApplet {
                 .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 0.0008)
                 .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 0.0008)
                 .add(
-                        new RectField2(STTensor2.fromPrimaryDirectionPolar(angle, 5)),
+                        new RectField2(STTensor2.fromPrimaryDirection(Vec2.fromPolar(angle, 5))),
                         new Vec2(0, 0),
                         0)
                 .build();
