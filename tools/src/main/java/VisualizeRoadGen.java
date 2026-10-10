@@ -41,11 +41,13 @@ public class VisualizeRoadGen extends PApplet {
                         .maxLength(600)
                         .maxSteps(1200)
                         .stepSize(0.5)
+                        .minRoadLength(20.0)
+                        .crossingDistance(30.0)
                         .build();
 
         var time1 = System.nanoTime();
 
-        gen.generateRoads(100);
+        gen.generateRoads(300);
 
         var time2 = System.nanoTime();
         System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");
@@ -68,6 +70,17 @@ public class VisualizeRoadGen extends PApplet {
     public void draw() {
         background(0xff000000);
         fill(0xffffffff);
+
+        // Draw red grid every 30 pixels
+        stroke(0xff880000);
+        strokeWeight(1);
+        for (int x = 0; x < width; x += 30) {
+            line(x, 0, x, height);
+        }
+        for (int y = 0; y < height; y += 30) {
+            line(0, y, width, y);
+        }
+
         stroke(0xffffffff);
         strokeWeight(2);
 

@@ -1,10 +1,12 @@
 package org.markscitygen.lib.tensorfield;
 
 import java.util.ArrayList;
+import org.markscitygen.lib.CrossingSearchMap2;
 import org.markscitygen.lib.Vec2;
 
 public final class RoadGenerator {
     final ArrayList<Path2> roads = new ArrayList<>();
+    final CrossingSearchMap2 crossingMap;
 
     final TensorField2 field;
     final Vec2 bounds;
@@ -12,6 +14,8 @@ public final class RoadGenerator {
     final double stepSize;
     final int maxSteps;
     final double minGrowOffset;
+    final double crossingDistance;
+    final double minRoadLength;
 
     private RoadGenerator(Builder builder) {
         this.field = builder.field;
@@ -20,6 +24,10 @@ public final class RoadGenerator {
         this.minGrowOffset = builder.minGrowOffset;
         this.maxSteps = builder.maxSteps;
         this.stepSize = builder.stepSize;
+        this.crossingDistance = builder.crossingDistance;
+        this.minRoadLength = builder.minRoadLength;
+
+        this.crossingMap = new CrossingSearchMap2(new Vec2(0, 0), bounds, crossingDistance);
     }
 
     public static final class Builder {
@@ -29,6 +37,8 @@ public final class RoadGenerator {
         private double minGrowOffset = 0.03;
         private int maxSteps = 10000;
         private double stepSize = 0.5;
+        private double crossingDistance = 30;
+        private double minRoadLength = 10;
 
         public Builder(TensorField2 field) {
             this.field = field;
@@ -46,8 +56,8 @@ public final class RoadGenerator {
             return this;
         }
 
-        /// If the direction vector at the current point is shorter than this length,
-        /// the point is considered degenerate and algorithm stops.
+        /// If the grow direction vector at the current point is shorter than this length,
+        /// the point is considered degenerate and road growing stops.
         public Builder minGrowOffset(double minGrowOffset) {
             this.minGrowOffset = minGrowOffset;
             return this;
@@ -62,6 +72,17 @@ public final class RoadGenerator {
         /// Road growth step size
         public Builder stepSize(double stepSize) {
             this.stepSize = stepSize;
+            return this;
+        }
+
+        /// Preferred distance between crossings
+        public Builder crossingDistance(double crossingDistance) {
+            this.crossingDistance = crossingDistance;
+            return this;
+        }
+
+        public Builder minRoadLength(double minRoadLength) {
+            this.minRoadLength = minRoadLength;
             return this;
         }
 
@@ -132,16 +153,25 @@ public final class RoadGenerator {
                 break;
             }
 
+            if (!crossingMap.canPlaceRoad(nextPoint, direction)) {
+                break;
+            }
+
             path.add(nextPoint);
 
-            totalLength += directionLength;
-            if (totalLength >= maxLength) {
+            if (totalLength + directionLength >= maxLength) {
                 break;
             }
 
             lastDirection = direction;
+            totalLength += directionLength;
         }
 
+        if (totalLength < minRoadLength) {
+            return;
+        }
+
+        crossingMap.markRoad(path);
         roads.add(path);
     }
 }

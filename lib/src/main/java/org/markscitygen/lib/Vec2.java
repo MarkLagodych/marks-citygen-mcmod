@@ -1,6 +1,8 @@
 package org.markscitygen.lib;
 
 public final class Vec2 {
+    public static double LENGTH_EPSILON = 1e-10;
+
     public double x;
     public double y;
 
@@ -105,6 +107,22 @@ public final class Vec2 {
     /// @return Polar angle in radians, in the range (-π, π]
     public double polarAngle() {
         return Math.atan2(y, x);
+    }
+
+    public double polarCos() {
+        var l = length();
+        if (l < LENGTH_EPSILON) {
+            return 0;
+        }
+        return x / l;
+    }
+
+    public double polarSin() {
+        var l = length();
+        if (l < LENGTH_EPSILON) {
+            return 0;
+        }
+        return y / l;
     }
 
     public double length() {
