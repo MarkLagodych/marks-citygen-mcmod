@@ -44,7 +44,13 @@ public final class STTensor2 {
 
     /// Constructs a tensor from a primary direction vector.
     public static STTensor2 fromPrimaryDirection(Vec2 vector) {
-        return fromPrimaryDirectionPolar(vector.polarAngle(), vector.length());
+        var l = vector.length();
+        var cosAngle = vector.x / l;
+        var sinAngle = vector.y / l;
+        return new STTensor2(
+                new Vec2(
+                        l * (2 * cosAngle * cosAngle - 1), // cos(2⋅angle)⋅length
+                        l * (2 * cosAngle * sinAngle))); // sin(2⋅angle)⋅length
     }
 
     /// @return The major eigenvector of the tensor
