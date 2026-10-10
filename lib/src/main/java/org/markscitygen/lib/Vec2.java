@@ -167,6 +167,12 @@ public final class Vec2 {
         return this.x >= 0 && this.x < bounds.x && this.y >= 0 && this.y < bounds.y;
     }
 
+    public void rotatePiHalf() {
+        var tmp = x;
+        x = -y;
+        y = tmp;
+    }
+
     /// Either negates `this` vector or does nothing.
     /// The resulting angle between `this` and `other` is in [0, π/2].
     public void alignWith(Vec2 other) {

@@ -80,9 +80,10 @@ public final class RoadGenerator {
         }
     }
 
-    private Vec2 getDirectionAt(Vec2 point, boolean isPrimary, Vec2 prevDirection) {
+    private Vec2 getDirectionAt(Vec2 point, boolean isSecondary, Vec2 prevDirection) {
         var tensor = field.getTensorAt(point);
-        var direction = isPrimary ? tensor.getPrimaryDirection() : tensor.getSecondaryDirection();
+        var direction = tensor.getPrimaryDirection();
+        if (isSecondary) direction.rotatePiHalf();
         direction.alignWith(prevDirection);
         return direction;
     }
@@ -93,20 +94,20 @@ public final class RoadGenerator {
         var seed = Vec2.randomBounded(bounds);
         path.add(seed);
 
-        var isPrimary = Math.random() < 0.5;
+        var isSecondary = Math.random() < 0.5;
 
         double totalLength = 0;
         Vec2 lastDirection = Vec2.randomUnit();
         for (int steps = 0; steps < maxSteps; steps++) {
             // Runge-Kutta 4th order integration step
             var lastPoint = path.getLast();
-            var k1 = getDirectionAt(lastPoint, isPrimary, lastDirection);
+            var k1 = getDirectionAt(lastPoint, isSecondary, lastDirection);
             var p1 = Vec2.sum(lastPoint, stepSize / 2, k1);
-            var k2 = getDirectionAt(p1, isPrimary, lastDirection);
+            var k2 = getDirectionAt(p1, isSecondary, lastDirection);
             var p2 = Vec2.sum(lastPoint, stepSize / 2, k2);
-            var k3 = getDirectionAt(p2, isPrimary, lastDirection);
+            var k3 = getDirectionAt(p2, isSecondary, lastDirection);
             var p3 = Vec2.sum(lastPoint, stepSize, k3);
-            var k4 = getDirectionAt(p3, isPrimary, lastDirection);
+            var k4 = getDirectionAt(p3, isSecondary, lastDirection);
             var nextPoint =
                     Vec2.sum(
                             lastPoint,
