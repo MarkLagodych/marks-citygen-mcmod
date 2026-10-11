@@ -38,11 +38,13 @@ public class VisualizeRoadGen extends PApplet {
         var gen =
                 new RoadGenerator.Builder(field)
                         .bounds(new Vec2(800, 600))
-                        .maxLength(600)
-                        .maxSteps(1200)
+                        .maxPoints(1200)
                         .stepSize(0.5)
                         .minRoadLength(20.0)
+                        .maxRoadLength(600)
+                        .minGrowLength(0.1)
                         .crossingDistance(30.0)
+                        .proximityThreshold(2.0)
                         .build();
 
         var time1 = System.nanoTime();

@@ -177,6 +177,10 @@ public final class Vec2 {
         return dx * dx + dy * dy;
     }
 
+    public boolean isCloseTo(Vec2 otherPoint, double proximityThreshold) {
+        return distanceSquaredTo(otherPoint) <= proximityThreshold * proximityThreshold;
+    }
+
     /// @return true if `this.x` is in [0, max.x) and `this.y` is in [0, max.y).
     public boolean isInBounds(Vec2 max) {
         return this.x >= 0 && this.x < max.x && this.y >= 0 && this.y < max.y;

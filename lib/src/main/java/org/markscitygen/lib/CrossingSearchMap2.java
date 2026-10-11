@@ -52,24 +52,25 @@ public class CrossingSearchMap2 {
     /// @param point The last (current) point of the road segment
     /// @param direction The direction of the road segment at the given point
     public boolean canPlaceRoad(Vec2 point, Vec2 direction) {
-        var row = getWindowRow(point);
-        var col = getWindowCol(point);
+        // var row = getWindowRow(point);
+        // var col = getWindowCol(point);
 
-        // -cos(b) ≈ sin(a) => a and b are perpendicular => correct crossing detected
-        var compareSin = -direction.polarCos();
-        if (direction.y < 0) {
-            compareSin = -compareSin;
-        }
+        // // -cos(b) ≈ sin(a) => a and b are perpendicular => correct crossing detected
+        // var compareSin = -direction.polarCos();
+        // if (direction.y < 0) {
+        //     compareSin = -compareSin;
+        // }
 
-        return canPlaceRoadInWindow(row, col, compareSin)
-                && canPlaceRoadInWindow(row - 1, col, compareSin)
-                && canPlaceRoadInWindow(row + 1, col, compareSin)
-                && canPlaceRoadInWindow(row, col - 1, compareSin)
-                && canPlaceRoadInWindow(row, col + 1, compareSin)
-                && canPlaceRoadInWindow(row - 1, col - 1, compareSin)
-                && canPlaceRoadInWindow(row - 1, col + 1, compareSin)
-                && canPlaceRoadInWindow(row + 1, col - 1, compareSin)
-                && canPlaceRoadInWindow(row + 1, col + 1, compareSin);
+        // return canPlaceRoadInWindow(row, col, compareSin)
+        //         && canPlaceRoadInWindow(row - 1, col, compareSin)
+        //         && canPlaceRoadInWindow(row + 1, col, compareSin)
+        //         && canPlaceRoadInWindow(row, col - 1, compareSin)
+        //         && canPlaceRoadInWindow(row, col + 1, compareSin)
+        //         && canPlaceRoadInWindow(row - 1, col - 1, compareSin)
+        //         && canPlaceRoadInWindow(row - 1, col + 1, compareSin)
+        //         && canPlaceRoadInWindow(row + 1, col - 1, compareSin)
+        //         && canPlaceRoadInWindow(row + 1, col + 1, compareSin);
+        return true;
     }
 
     private boolean canPlaceRoadInWindow(int row, int col, double compareSin) {
