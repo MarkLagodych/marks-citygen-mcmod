@@ -71,13 +71,13 @@ public class VisualizeRoadGen extends PApplet {
         background(0xff000000);
         fill(0xffffffff);
 
-        // Draw red grid every 30 pixels
+        // Draw red grid every 15 pixels
         stroke(0xff880000);
         strokeWeight(1);
-        for (int x = 0; x < width; x += 30) {
+        for (int x = 0; x < width; x += 15) {
             line(x, 0, x, height);
         }
-        for (int y = 0; y < height; y += 30) {
+        for (int y = 0; y < height; y += 15) {
             line(0, y, width, y);
         }
 

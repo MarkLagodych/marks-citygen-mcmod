@@ -57,6 +57,9 @@ public class CrossingSearchMap2 {
 
         // -cos(b) ≈ sin(a) => a and b are perpendicular => correct crossing detected
         var compareSin = -direction.polarCos();
+        if (direction.y < 0) {
+            compareSin = -compareSin;
+        }
 
         return canPlaceRoadInWindow(row, col, compareSin)
                 && canPlaceRoadInWindow(row - 1, col, compareSin)
@@ -99,7 +102,12 @@ public class CrossingSearchMap2 {
             return;
         }
 
-        windows[index] = Math.abs(direction.polarSin());
+        if (windows[index] == WINDOW_EMPTY) {
+            windows[index] = Math.abs(direction.polarSin());
+            return;
+        }
+
+        windows[index] = WINDOW_FULL;
     }
 
     public void markRoad(Path2 path) {
