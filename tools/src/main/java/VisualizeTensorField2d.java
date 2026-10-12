@@ -22,12 +22,12 @@ public class VisualizeTensorField2d extends PApplet {
                 .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 0.0008)
                 .add(new RadialField2(new Vec2(300, 300)), new Vec2(300, 300), 0.003)
                 .add(
-                        new RectField2(STTensor2.fromPrimaryDirection(Vec2.fromPolar(angle, 5))),
+                        new RectField2(STTensor2.fromMajorEigenvector(Vec2.fromPolar(angle, 5))),
                         new Vec2(0, 0),
                         0)
                 .add(
                         new RectField2(
-                                STTensor2.fromPrimaryDirection(Vec2.fromPolar(Math.PI / 3, 5))),
+                                STTensor2.fromMajorEigenvector(Vec2.fromPolar(Math.PI / 3, 5))),
                         new Vec2(500, 400),
                         0.0001)
                 .build();
@@ -53,7 +53,7 @@ public class VisualizeTensorField2d extends PApplet {
         for (int x = 0; x < width; x += 20) {
             for (int y = 0; y < height; y += 20) {
                 var tensor = field.getTensorAt(new Vec2(x, y));
-                var direction = tensor.getPrimaryDirection();
+                var direction = tensor.getMajorEigenvector();
                 line(
                         (float) x,
                         (float) y,

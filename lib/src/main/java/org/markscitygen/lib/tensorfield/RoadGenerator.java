@@ -87,8 +87,9 @@ public final class RoadGenerator {
             return this;
         }
 
-        /// Tolerance for distance checking: `|p1-p2| <= proximityThreshold`
-        /// means that p1 and p2 are considered to be at the same location.
+        /// Tolerance for distance checking: if `|p1-p2| <= proximityThreshold`,
+        /// then p1 and p2 are considered to be at the same location.
+        /// This is used for intersection detection.
         public Builder proximityThreshold(double proximityThreshold) {
             this.proximityThreshold = proximityThreshold;
             return this;
@@ -109,28 +110,32 @@ public final class RoadGenerator {
         }
     }
 
-    private Vec2 getGrowDirectionAt(Vec2 point, boolean isSecondary, Vec2 prevGrowDirection) {
-        var tensor = field.getTensorAt(point);
-        var direction = tensor.getPrimaryDirection();
-        if (isSecondary) direction.rotatePiHalf();
-        direction.alignWith(prevGrowDirection);
-        return direction;
+    private Vec2 getGrowDirectionAt(Vec2 point, boolean isMinorLine, Vec2 prevGrowDirection) {
+        var growDirection = field.getTensorAt(point).getMajorEigenvector();
+        if (isMinorLine) growDirection.rotatePiHalf();
+        growDirection.alignWith(prevGrowDirection);
+        return growDirection;
     }
 
-    private Vec2 getNextPoint(Vec2 prevPoint, boolean isSecondary, Vec2 prevGrowDirection) {
+    private Vec2 getNextPoint(Vec2 prevPoint, boolean isMinorLine, Vec2 prevGrowDirection) {
         // Runge-Kutta 4th order integration step
 
         var h = stepSize;
         // TODO Adapt the step size for better precision
 
-        var k1 = getGrowDirectionAt(prevPoint, isSecondary, prevGrowDirection);
-        var p1 = Vec2.sum(prevPoint, h / 2, k1);
-        var k2 = getGrowDirectionAt(p1, isSecondary, prevGrowDirection);
-        var p2 = Vec2.sum(prevPoint, h / 2, k2);
-        var k3 = getGrowDirectionAt(p2, isSecondary, prevGrowDirection);
-        var p3 = Vec2.sum(prevPoint, h, k3);
-        var k4 = getGrowDirectionAt(p3, isSecondary, prevGrowDirection);
-        return Vec2.sum(prevPoint, h / 6, k1, h / 3, k2, h / 3, k3, h / 6, k4);
+        var p1 = prevPoint;
+        var k1 = getGrowDirectionAt(p1, isMinorLine, prevGrowDirection);
+
+        var p2 = Vec2.sum(p1, h / 2, k1);
+        var k2 = getGrowDirectionAt(p2, isMinorLine, prevGrowDirection);
+
+        var p3 = Vec2.sum(p1, h / 2, k2);
+        var k3 = getGrowDirectionAt(p3, isMinorLine, prevGrowDirection);
+
+        var p4 = Vec2.sum(p1, h, k3);
+        var k4 = getGrowDirectionAt(p4, isMinorLine, prevGrowDirection);
+
+        return Vec2.sum(p1, h / 6, k1, h / 3, k2, h / 3, k3, h / 6, k4);
     }
 
     public void generateRoad() {
@@ -138,7 +143,7 @@ public final class RoadGenerator {
 
         var path = new Path2();
         var totalLength = 0.0;
-        var isSecondary = Math.random() < 0.5;
+        var isMinorLine = Math.random() < 0.5;
         var prevPoint = seed;
         var prevGrowDirection = Vec2.fromPolarUnit(Math.random() * 2 * Math.PI);
         var wentFarFromSeed = false;
@@ -146,7 +151,7 @@ public final class RoadGenerator {
         path.add(seed);
 
         for (int steps = 0; steps < maxPoints; steps++) {
-            var point = getNextPoint(prevPoint, isSecondary, prevGrowDirection);
+            var point = getNextPoint(prevPoint, isMinorLine, prevGrowDirection);
 
             if (!point.isInBounds(bounds)) {
                 break;

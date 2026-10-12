@@ -11,6 +11,6 @@ public final class RadialField2 implements TensorField2 {
 
     @Override
     public STTensor2 getTensorAt(Vec2 point) {
-        return STTensor2.fromPrimaryDirection(point.directionTo(center));
+        return STTensor2.fromMajorEigenvector(point.directionTo(center));
     }
 }

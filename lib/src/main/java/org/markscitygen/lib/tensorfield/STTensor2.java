@@ -18,8 +18,10 @@ import org.markscitygen.lib.Vec2;
 /// An advantage of this representation is that its major and minor eigenvectors are orthogonal,
 /// are of the same length, and are fast to compute (no eigenvalue decomposition needed).
 ///
-/// To avoid data duplication, only the X and Y components are stored.
+/// To get the minor eigenvector, simply rotate the major eigenvector by π/2
+/// using {@link Vec2#rotatePiHalf()}.
 public final class STTensor2 {
+    /// To avoid data duplication, only the X and Y components are stored.
     private final Vec2 xy;
 
     public STTensor2() {
@@ -34,8 +36,8 @@ public final class STTensor2 {
         this.xy = new Vec2(other.xy);
     }
 
-    /// Constructs a tensor from a major eigenvector.
-    public static STTensor2 fromPrimaryDirection(Vec2 vector) {
+    /// Constructs a tensor from its major (primary) direction.
+    public static STTensor2 fromMajorEigenvector(Vec2 vector) {
         var l = vector.length();
         if (l < Vec2.LENGTH_EPSILON) {
             return new STTensor2(0, 0);
@@ -54,8 +56,8 @@ public final class STTensor2 {
         return new STTensor2(l * cos2A, l * sin2A);
     }
 
-    /// @return The major eigenvector of the tensor
-    public Vec2 getPrimaryDirection() {
+    /// Gets the major (primary) direction of the tensor.
+    public Vec2 getMajorEigenvector() {
         var l = xy.length();
         if (l < Vec2.LENGTH_EPSILON) {
             return new Vec2(0, 0);
