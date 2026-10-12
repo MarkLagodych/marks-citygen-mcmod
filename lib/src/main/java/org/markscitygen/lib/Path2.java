@@ -1,7 +1,6 @@
-package org.markscitygen.lib.tensorfield;
+package org.markscitygen.lib;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import org.markscitygen.lib.Vec2;
 
 public class Path2 {
     // Point coordinates stored as a SoA for better performance

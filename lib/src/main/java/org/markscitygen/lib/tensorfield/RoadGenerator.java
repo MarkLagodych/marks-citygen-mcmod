@@ -1,12 +1,14 @@
 package org.markscitygen.lib.tensorfield;
 
 import java.util.ArrayList;
-import org.markscitygen.lib.CrossingSearchMap2;
+import org.markscitygen.lib.Path2;
+import org.markscitygen.lib.PointSearchMap2;
 import org.markscitygen.lib.Vec2;
 
 public final class RoadGenerator {
     final ArrayList<Path2> roads = new ArrayList<>();
-    final CrossingSearchMap2 crossingMap;
+    final PointSearchMap2 majorPointMap;
+    final PointSearchMap2 minorPointMap;
 
     final TensorField2 field;
     final Vec2 bounds;
@@ -29,7 +31,8 @@ public final class RoadGenerator {
         this.crossingDistance = builder.crossingDistance;
         this.proximityThreshold = builder.proximityThreshold;
 
-        this.crossingMap = new CrossingSearchMap2(new Vec2(0, 0), bounds, crossingDistance);
+        this.majorPointMap = new PointSearchMap2(bounds, crossingDistance);
+        this.minorPointMap = new PointSearchMap2(bounds, crossingDistance);
     }
 
     public static final class Builder {
@@ -148,6 +151,8 @@ public final class RoadGenerator {
         var prevGrowDirection = Vec2.fromPolarUnit(Math.random() * 2 * Math.PI);
         var wentFarFromSeed = false;
 
+        var pointMap = isMinorLine ? minorPointMap : majorPointMap;
+
         path.add(seed);
 
         for (int steps = 0; steps < maxPoints; steps++) {
@@ -175,7 +180,7 @@ public final class RoadGenerator {
                 break;
             }
 
-            if (!crossingMap.canPlaceRoad(point, growDirection)) {
+            if (pointMap.anyPointsNear(point)) {
                 // TODO look ahead to join another road
                 break;
             }
@@ -196,7 +201,10 @@ public final class RoadGenerator {
             return;
         }
 
-        crossingMap.markRoad(path);
+        for (int i = 0; i < path.size(); i++) {
+            pointMap.add(path.get(i));
+        }
+
         roads.add(path);
     }
 }

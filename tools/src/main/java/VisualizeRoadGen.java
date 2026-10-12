@@ -1,6 +1,6 @@
 import java.util.ArrayList;
+import org.markscitygen.lib.Path2;
 import org.markscitygen.lib.Vec2;
-import org.markscitygen.lib.tensorfield.Path2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
 import org.markscitygen.lib.tensorfield.RoadGenerator;
@@ -72,16 +72,6 @@ public class VisualizeRoadGen extends PApplet {
     public void draw() {
         background(0xff000000);
         fill(0xffffffff);
-
-        // Draw red grid every 15 pixels
-        stroke(0xff880000);
-        strokeWeight(1);
-        for (int x = 0; x < width; x += 15) {
-            line(x, 0, x, height);
-        }
-        for (int y = 0; y < height; y += 15) {
-            line(0, y, width, y);
-        }
 
         stroke(0xffffffff);
         strokeWeight(2);
