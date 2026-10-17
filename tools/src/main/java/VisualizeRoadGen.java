@@ -49,7 +49,7 @@ public class VisualizeRoadGen extends PApplet {
 
         var time1 = System.nanoTime();
 
-        gen.generateRoads(300);
+        gen.generateRoads(10);
 
         var time2 = System.nanoTime();
         System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");
@@ -78,8 +78,8 @@ public class VisualizeRoadGen extends PApplet {
 
         for (var road : roads) {
             for (int i = 0; i < road.size() - 1; i++) {
-                var point = road.get(i);
-                var nextPoint = road.get(i + 1);
+                var point = road.getPoint(i);
+                var nextPoint = road.getPoint(i + 1);
                 line((float) point.x, (float) point.y, (float) nextPoint.x, (float) nextPoint.y);
             }
         }

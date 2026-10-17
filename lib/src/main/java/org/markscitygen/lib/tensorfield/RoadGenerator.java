@@ -1,14 +1,15 @@
 package org.markscitygen.lib.tensorfield;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import org.markscitygen.lib.NearbyPointSearchMap2;
+import java.util.Collection;
 import org.markscitygen.lib.Path2;
 import org.markscitygen.lib.Vec2;
 
 public final class RoadGenerator {
     final ArrayList<Path2> roads = new ArrayList<>();
-    final NearbyPointSearchMap2 majorNearbyPointMap;
-    final NearbyPointSearchMap2 minorNearbyPointMap;
+    final RoadDensityChecker majorRoadDensityChecker;
+    final RoadDensityChecker minorRoadDensityChecker;
 
     final TensorField2 field;
     final Vec2 bounds;
@@ -31,8 +32,8 @@ public final class RoadGenerator {
         this.crossingDistance = builder.crossingDistance;
         this.proximityThreshold = builder.proximityThreshold;
 
-        this.majorNearbyPointMap = new NearbyPointSearchMap2(bounds, crossingDistance);
-        this.minorNearbyPointMap = new NearbyPointSearchMap2(bounds, crossingDistance);
+        this.majorRoadDensityChecker = new RoadDensityChecker(bounds, crossingDistance);
+        this.minorRoadDensityChecker = new RoadDensityChecker(bounds, crossingDistance);
     }
 
     public static final class Builder {
@@ -103,13 +104,52 @@ public final class RoadGenerator {
         }
     }
 
+    static final class Seed {
+        final Vec2 point;
+        final boolean isMinorLine;
+        final Vec2 growDirection;
+
+        public static Seed randomInBounds(Vec2 bounds) {
+            return new Seed(new Vec2(Math.random() * bounds.x, Math.random() * bounds.y));
+        }
+
+        Seed(Vec2 point) {
+            this(point, false);
+        }
+
+        Seed(Vec2 point, boolean isMinorLine) {
+            this(point, isMinorLine, Vec2.fromPolarUnit(Math.random() * 2 * Math.PI));
+        }
+
+        Seed(Vec2 point, boolean isMinorLine, Vec2 growDirection) {
+            this.point = point;
+            this.isMinorLine = isMinorLine;
+            this.growDirection = growDirection;
+        }
+    }
+
     public ArrayList<Path2> getGeneratedRoads() {
         return roads;
     }
 
     public void generateRoads(int numRoads) {
+        var seeds = new ArrayDeque<Seed>();
+
         for (int i = 0; i < numRoads; i++) {
-            generateRoad();
+            var seed = Seed.randomInBounds(bounds);
+            seeds.add(seed);
+        }
+
+        while (!seeds.isEmpty()) {
+            var seed = seeds.pollFirst();
+            var road = generateRoad(seed);
+            if (road == null) {
+                continue;
+            }
+
+            addRoadToGenerationContext(road, seed.isMinorLine);
+            roads.add(road);
+            placeSeeds(road, seed.isMinorLine, seeds);
         }
     }
 
@@ -141,22 +181,21 @@ public final class RoadGenerator {
         return Vec2.sum(p1, h / 6, k1, h / 3, k2, h / 3, k3, h / 6, k4);
     }
 
-    public void generateRoad() {
-        var seed = new Vec2(Math.random() * bounds.x, Math.random() * bounds.y);
-
+    /// @return null if failed to generate a road (e.g. if the road is too short)
+    public Path2 generateRoad(Seed seed) {
         var path = new Path2();
         var totalLength = 0.0;
-        var isMinorLine = Math.random() < 0.5;
-        var prevPoint = seed;
-        var prevGrowDirection = Vec2.fromPolarUnit(Math.random() * 2 * Math.PI);
+        var prevPoint = seed.point;
+        var prevGrowDirection = seed.growDirection;
         var wentFarFromSeed = false;
 
-        var nearbyPointMap = isMinorLine ? minorNearbyPointMap : majorNearbyPointMap;
+        var roadDensityChecker =
+                seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
 
-        path.add(seed);
+        path.add(seed.point);
 
         for (int steps = 0; steps < maxPoints; steps++) {
-            var point = getNextPoint(prevPoint, isMinorLine, prevGrowDirection);
+            var point = getNextPoint(prevPoint, seed.isMinorLine, prevGrowDirection);
 
             if (!point.isInBounds(bounds)) {
                 break;
@@ -167,20 +206,21 @@ public final class RoadGenerator {
             var growLength = growDirection.length();
 
             if (growLength < minGrowLength) {
+                // Hit a degenerate point in the tensor field
                 break;
             }
 
-            if (!wentFarFromSeed && !point.isCloseTo(seed, proximityThreshold)) {
+            if (!wentFarFromSeed && !point.isCloseTo(seed.point, proximityThreshold)) {
                 wentFarFromSeed = true;
             }
 
-            if (wentFarFromSeed && point.isCloseTo(seed, proximityThreshold)) {
+            if (wentFarFromSeed && point.isCloseTo(seed.point, proximityThreshold)) {
                 path.add(point);
-                path.add(seed);
+                path.close();
                 break;
             }
 
-            if (nearbyPointMap.anyPointsNear(point)) {
+            if (roadDensityChecker.checkTooDenseNear(point)) {
                 // TODO look ahead to join another road
                 break;
             }
@@ -198,11 +238,26 @@ public final class RoadGenerator {
         }
 
         if (totalLength < minRoadLength) {
-            return;
+            return null;
         }
 
-        nearbyPointMap.add(path);
+        return path;
+    }
 
-        roads.add(path);
+    private void addRoadToGenerationContext(Path2 road, boolean isMinorLine) {
+        var roadDensityChecker = isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
+        roadDensityChecker.add(road);
+    }
+
+    private void placeSeeds(Path2 road, boolean isMinorLine, Collection<Seed> seeds) {
+        var length = 0.0;
+        for (int i = 0; i < road.segmentCount(); i++) {
+            length += road.getSegmentLength(i);
+
+            if (length > crossingDistance) {
+                length = 0.0;
+                seeds.add(new Seed(road.getPoint(i), !isMinorLine, road.getDirectionAt(i)));
+            }
+        }
     }
 }
