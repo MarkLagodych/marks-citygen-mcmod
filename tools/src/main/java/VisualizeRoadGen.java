@@ -15,21 +15,21 @@ public class VisualizeRoadGen extends PApplet {
 
     static final SumField2 field =
             new SumField2.Builder()
-                    .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 0.0008)
-                    .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 0.0008)
-                    .add(new RadialField2(new Vec2(300, 300)), new Vec2(300, 300), 0.003)
+                    .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 100)
+                    .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 100)
+                    .add(new RadialField2(new Vec2(300, 300)), new Vec2(300, 300), 50)
                     .add(
                             new RectField2(
                                     STTensor2.fromMajorEigenvector(
                                             Vec2.fromPolar(Math.PI / 6, 0.5))),
                             new Vec2(0, 0),
-                            0)
+                            Double.POSITIVE_INFINITY)
                     .add(
                             new RectField2(
                                     STTensor2.fromMajorEigenvector(
                                             Vec2.fromPolar(Math.PI / 3, 0.5))),
                             new Vec2(500, 400),
-                            0.0008)
+                            100)
                     .build();
 
     ArrayList<Path2> roads = genRoads();
