@@ -1,6 +1,6 @@
 package org.markscitygen.lib.tensorfield;
 
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.lib.core.Vec2;
 
 public final class RectField2 implements TensorField2 {
     private final STTensor2 tensor;

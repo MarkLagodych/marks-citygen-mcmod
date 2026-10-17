@@ -1,9 +1,9 @@
 import java.util.ArrayList;
-import org.markscitygen.lib.Path2;
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.lib.RoadGenerator;
+import org.markscitygen.lib.core.Path2;
+import org.markscitygen.lib.core.Vec2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
-import org.markscitygen.lib.tensorfield.RoadGenerator;
 import org.markscitygen.lib.tensorfield.STTensor2;
 import org.markscitygen.lib.tensorfield.SumField2;
 import processing.core.PApplet;
@@ -49,7 +49,7 @@ public class VisualizeRoadGen extends PApplet {
 
         var time1 = System.nanoTime();
 
-        gen.generateRoads(10);
+        gen.generateRoads(30);
 
         var time2 = System.nanoTime();
         System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");

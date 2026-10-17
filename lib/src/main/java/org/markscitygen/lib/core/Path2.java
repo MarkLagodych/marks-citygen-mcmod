@@ -1,4 +1,4 @@
-package org.markscitygen.lib;
+package org.markscitygen.lib.core;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 

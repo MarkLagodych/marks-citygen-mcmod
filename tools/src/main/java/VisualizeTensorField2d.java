@@ -1,4 +1,4 @@
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.lib.core.Vec2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
 import org.markscitygen.lib.tensorfield.STTensor2;

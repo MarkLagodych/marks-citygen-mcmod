@@ -1,6 +1,6 @@
 package org.markscitygen.lib.tensorfield;
 
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.lib.core.Vec2;
 
 public final class RadialField2 implements TensorField2 {
     private final Vec2 center;

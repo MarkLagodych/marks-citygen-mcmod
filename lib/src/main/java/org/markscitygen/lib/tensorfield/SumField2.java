@@ -1,7 +1,7 @@
 package org.markscitygen.lib.tensorfield;
 
 import java.util.ArrayList;
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.lib.core.Vec2;
 
 public final class SumField2 implements TensorField2 {
     private final TensorField2[] fields;

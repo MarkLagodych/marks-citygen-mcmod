@@ -1,4 +1,4 @@
-package org.markscitygen.lib;
+package org.markscitygen.lib.core;
 
 public final class Vec2 {
     public static double LENGTH_EPSILON = 1e-10;

@@ -1,14 +1,14 @@
-package org.markscitygen.lib.tensorfield;
+package org.markscitygen.lib;
 
-import org.markscitygen.lib.Path2;
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.lib.core.Path2;
+import org.markscitygen.lib.core.Vec2;
 
 /// Searches for nearby points in a constant radius in 2D space.
 ///
 /// This is designed to be fast in trade for accuracy.
 /// The whole map is divided into a grid of cells with 1/5 the radius size.
 /// Each cell is a boolean indicating if there is a point in that cell.
-public class RoadDensityChecker {
+class RoadDensityChecker {
     private static final double RADIUS_TO_CELL_SIZE = 1.0 / 5;
 
     /// This many cells are added to each side of the bounding box to avoid edge cases

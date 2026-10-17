@@ -1,15 +1,19 @@
-package org.markscitygen.lib.tensorfield;
+package org.markscitygen.lib;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.markscitygen.lib.Path2;
-import org.markscitygen.lib.Vec2;
+import org.markscitygen.lib.core.Path2;
+import org.markscitygen.lib.core.Vec2;
+import org.markscitygen.lib.tensorfield.FieldIntegrator2;
+import org.markscitygen.lib.tensorfield.TensorField2;
 
 public final class RoadGenerator {
     final ArrayList<Path2> roads = new ArrayList<>();
     final RoadDensityChecker majorRoadDensityChecker;
     final RoadDensityChecker minorRoadDensityChecker;
+
+    final FieldIntegrator2 fieldIntegrator;
 
     final TensorField2 field;
     final Vec2 bounds;
@@ -34,6 +38,8 @@ public final class RoadGenerator {
 
         this.majorRoadDensityChecker = new RoadDensityChecker(bounds, crossingDistance);
         this.minorRoadDensityChecker = new RoadDensityChecker(bounds, crossingDistance);
+
+        this.fieldIntegrator = new FieldIntegrator2(field, stepSize);
     }
 
     public static final class Builder {
@@ -153,34 +159,6 @@ public final class RoadGenerator {
         }
     }
 
-    private Vec2 getGrowDirectionAt(Vec2 point, boolean isMinorLine, Vec2 prevGrowDirection) {
-        var growDirection = field.getTensorAt(point).getMajorEigenvector();
-        if (isMinorLine) growDirection.rotatePiHalf();
-        growDirection.alignWith(prevGrowDirection);
-        return growDirection;
-    }
-
-    private Vec2 getNextPoint(Vec2 prevPoint, boolean isMinorLine, Vec2 prevGrowDirection) {
-        // Runge-Kutta 4th order integration step
-
-        var h = stepSize;
-        // TODO Adapt the step size for better precision
-
-        var p1 = prevPoint;
-        var k1 = getGrowDirectionAt(p1, isMinorLine, prevGrowDirection);
-
-        var p2 = Vec2.sum(p1, h / 2, k1);
-        var k2 = getGrowDirectionAt(p2, isMinorLine, prevGrowDirection);
-
-        var p3 = Vec2.sum(p1, h / 2, k2);
-        var k3 = getGrowDirectionAt(p3, isMinorLine, prevGrowDirection);
-
-        var p4 = Vec2.sum(p1, h, k3);
-        var k4 = getGrowDirectionAt(p4, isMinorLine, prevGrowDirection);
-
-        return Vec2.sum(p1, h / 6, k1, h / 3, k2, h / 3, k3, h / 6, k4);
-    }
-
     /// @return null if failed to generate a road (e.g. if the road is too short)
     public Path2 generateRoad(Seed seed) {
         var path = new Path2();
@@ -195,7 +173,8 @@ public final class RoadGenerator {
         path.add(seed.point);
 
         for (int steps = 0; steps < maxPoints; steps++) {
-            var point = getNextPoint(prevPoint, seed.isMinorLine, prevGrowDirection);
+            var point =
+                    fieldIntegrator.getNextPoint(prevPoint, seed.isMinorLine, prevGrowDirection);
 
             if (!point.isInBounds(bounds)) {
                 break;
