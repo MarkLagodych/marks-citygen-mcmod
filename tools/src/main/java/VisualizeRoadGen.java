@@ -13,7 +13,11 @@ public class VisualizeRoadGen extends PApplet {
         PApplet.main(VisualizeRoadGen.class, args);
     }
 
-    static final SumField2 field =
+    public VisualizeRoadGen() {
+        genRoads();
+    }
+
+    final SumField2 field =
             new SumField2.Builder()
                     .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 100)
                     .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 100)
@@ -32,9 +36,9 @@ public class VisualizeRoadGen extends PApplet {
                             100)
                     .build();
 
-    ArrayList<Path2> roads = genRoads();
+    ArrayList<Path2> roads;
 
-    static ArrayList<Path2> genRoads() {
+    void genRoads() {
         var gen =
                 new RoadGenerator.Builder(field)
                         .bounds(new Vec2(800, 600))
@@ -54,7 +58,7 @@ public class VisualizeRoadGen extends PApplet {
         var time2 = System.nanoTime();
         System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");
 
-        return gen.getGeneratedRoads();
+        roads = gen.getGeneratedRoads();
     }
 
     @Override
@@ -88,7 +92,7 @@ public class VisualizeRoadGen extends PApplet {
     @Override
     public void keyPressed() {
         if (key == 'g') {
-            roads = genRoads();
+            genRoads();
             redraw();
         }
     }

@@ -6,6 +6,10 @@ public final class Vec2 {
     public double x;
     public double y;
 
+    public String toString() {
+        return String.format("[%.3f, %.3f]", x, y);
+    }
+
     public Vec2(double x, double y) {
         this.x = x;
         this.y = y;

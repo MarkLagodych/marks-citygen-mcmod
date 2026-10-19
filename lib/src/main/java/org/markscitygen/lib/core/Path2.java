@@ -2,15 +2,39 @@ package org.markscitygen.lib.core;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
+/// A 2D path represented as a sequence of points.
+///
+/// A path is logically devided into segments, where the i-th segment is the straight line
+/// connecting the i-th point and the (i+1)-th point.
+/// Segment indexes go from 0 to {@link #size()} - 1.
+///
+/// Calling functions that operate on segments with an invalid index or when the path
+/// has less than 2 points will throw an {@link IndexOutOfBoundsException}.
 public class Path2 {
-    // Point coordinates stored as a SoA for better performance
+    // Point coordinates stored as a Structure of Arrays for better performance
     DoubleArrayList xs = new DoubleArrayList();
     DoubleArrayList ys = new DoubleArrayList();
 
     public Path2() {}
 
+    public Path2(Path2 other) {
+        xs.addAll(other.xs);
+        ys.addAll(other.ys);
+    }
+
+    public Path2(Vec2... points) {
+        for (var point : points) {
+            add(point);
+        }
+    }
+
     public int size() {
         return xs.size();
+    }
+
+    public void size(int size) {
+        xs.size(size);
+        ys.size(size);
     }
 
     public int segmentCount() {
@@ -55,9 +79,6 @@ public class Path2 {
         return getX(0) == getX(size() - 1) && getY(0) == getY(size() - 1);
     }
 
-    /// @return The length of i-th segment.
-    ///
-    /// The i-th segment is the straight line connecting the i-th point and the (i+1)-th point.
     public double getSegmentLength(int segmentIndex) {
         var dx = getX(segmentIndex + 1) - getX(segmentIndex);
         var dy = getY(segmentIndex + 1) - getY(segmentIndex);
@@ -68,5 +89,15 @@ public class Path2 {
         var dx = getX(segmentIndex + 1) - getX(segmentIndex);
         var dy = getY(segmentIndex + 1) - getY(segmentIndex);
         return new Vec2(dx, dy);
+    }
+
+    public Vec2 getLastSegmentDirection() {
+        return getDirectionAt(size() - 2);
+    }
+
+    public void pop() {
+        if (size() == 0) return;
+        xs.removeDouble(xs.size() - 1);
+        ys.removeDouble(ys.size() - 1);
     }
 }
