@@ -27,7 +27,7 @@ public final class RoadGenerator {
     final double minGrowLength;
     final double proximityThreshold;
 
-    public ArrayList<Integer> initialSizes = new ArrayList<>();
+    int nextPathId = 0;
 
     private RoadGenerator(Builder builder) {
         this.field = builder.field;
@@ -125,7 +125,7 @@ public final class RoadGenerator {
         var tracers = new ArrayList<RoadTracer>();
 
         for (int i = 0; i < numRoads; i++) {
-            var seed = RoadSeed.randomInBounds(bounds);
+            var seed = RoadSeed.randomInBounds(bounds, nextPathId++);
             seeds.add(seed);
         }
 
@@ -138,57 +138,59 @@ public final class RoadGenerator {
             }
 
             tracers.add(tracer);
-            roads.add(tracer.path);
-            intersectionFinder.add(tracer.path, roads.size() - 1);
+
+            intersectionFinder.add(tracer.path, tracer.pathId);
 
             (seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker).add(tracer.path);
 
             placeSeeds(tracer.path, seed.isMinorLine, seeds);
         }
-        for (int i = 0; i < roads.size(); i++) {
-            continueRoad(tracers.get(i), i);
+
+        for (var tracer : tracers) {
+            continueRoad(tracer);
+        }
+
+        for (var tracer : tracers) {
+            roads.add(tracer.path);
         }
     }
 
     /// @return null if failed to generate a road (e.g. if the road is too short)
     RoadTracer generateRoad(RoadSeed seed) {
-        var tracer = new RoadTracer(fieldIntegrator, seed);
+        final var tracer = new RoadTracer(seed, fieldIntegrator, minGrowLength);
+
+        final var roadDensityChecker =
+                seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
 
         var totalLength = 0.0;
         var wentFarFromSeed = false;
 
-        var roadDensityChecker =
-                seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
-
         for (int points = 0; points < maxPoints; points++) {
-            tracer.nextPoint();
+            final var point = tracer.nextPoint();
 
-            if (!tracer.point.isInBounds(bounds)) {
+            if (point == null) {
                 break;
             }
 
-            var growLength = tracer.growDirection.length();
-
-            if (growLength < minGrowLength) {
-                // Hit a degenerate point in the tensor field, cannot grow anymore
+            if (!point.isInBounds(bounds)) {
                 break;
             }
 
-            if (!wentFarFromSeed && !tracer.point.isCloseTo(seed.point, proximityThreshold)) {
+            if (!wentFarFromSeed && !point.isCloseTo(seed.point, proximityThreshold)) {
                 wentFarFromSeed = true;
-            } else if (wentFarFromSeed && tracer.point.isCloseTo(seed.point, proximityThreshold)) {
+            } else if (wentFarFromSeed && point.isCloseTo(seed.point, proximityThreshold)) {
                 tracer.acceptPoint();
                 tracer.path.close();
                 break;
             }
 
-            if (roadDensityChecker.checkTooDenseNear(tracer.point)
-                    || totalLength + growLength >= maxRoadLength) {
+            if (roadDensityChecker.checkTooDenseNear(point)
+                    || totalLength + tracer.growLength >= maxRoadLength) {
                 break;
             }
 
             tracer.acceptPoint();
-            totalLength += growLength;
+            totalLength += tracer.growLength;
         }
 
         if (totalLength < minRoadLength) {
@@ -198,48 +200,45 @@ public final class RoadGenerator {
         return tracer;
     }
 
-    void continueRoad(RoadTracer tracer, int pathId) {
-
+    void continueRoad(RoadTracer tracer) {
         var totalGrowLength = 0.0;
 
-        var initialSize = tracer.path.size();
-        initialSizes.add(initialSize);
+        final var initialSize = tracer.path.size();
 
         if (tracer.path.isClosed()) {
             return;
         }
 
         for (; ; ) {
-            tracer.nextPoint();
+            final var point = tracer.nextPoint();
 
-            if (!tracer.point.isInBounds(bounds)) {
+            if (point == null) {
                 break;
             }
 
-            var growLength = tracer.growDirection.length();
-
-            if (growLength < minGrowLength) {
-                // Hit a degenerate point in the tensor field, cannot grow anymore
+            if (!point.isInBounds(bounds)) {
                 break;
             }
 
-            if (totalGrowLength + growLength >= crossingDistance) {
+            if (totalGrowLength + tracer.growLength >= crossingDistance) {
                 break;
             }
 
-            totalGrowLength += growLength;
+            totalGrowLength += tracer.growLength;
 
-            var sizeBeforeAdd = tracer.path.size();
+            // This is also the index of the first point generated in this iteration
+            final var sizeBeforeAdd = tracer.path.size();
 
             tracer.acceptPoint();
 
-            if (tracer.point.isCloseTo(tracer.seedPoint, proximityThreshold)) {
+            if (point.isCloseTo(tracer.seedPoint, proximityThreshold)) {
                 tracer.path.close();
                 return;
             }
 
             var intersection =
-                    intersectionFinder.findIntersection(tracer.path, sizeBeforeAdd + 1, pathId);
+                    intersectionFinder.findIntersection(tracer.path, sizeBeforeAdd, tracer.pathId);
+
             if (intersection != null) {
                 tracer.path.size(intersection.pointIndex() + 1);
                 tracer.path.add(intersection.pointX(), intersection.pointY());
@@ -251,7 +250,8 @@ public final class RoadGenerator {
     }
 
     private void placeSeeds(RasterPath2 road, boolean isMinorLine, Collection<RoadSeed> seeds) {
-        seeds.add(new RoadSeed(road.getPoint(0), !isMinorLine, road.getDirectionAt(0)));
+        seeds.add(
+                new RoadSeed(road.getPoint(0), !isMinorLine, road.getDirectionAt(0), nextPathId++));
 
         var length = 0.0;
         for (int i = 0; i < road.segmentCount(); i++) {
@@ -259,7 +259,12 @@ public final class RoadGenerator {
 
             if (length > crossingDistance) {
                 length = 0.0;
-                seeds.add(new RoadSeed(road.getPoint(i), !isMinorLine, road.getDirectionAt(i)));
+                seeds.add(
+                        new RoadSeed(
+                                road.getPoint(i),
+                                !isMinorLine,
+                                road.getDirectionAt(i),
+                                nextPathId++));
             }
         }
     }
