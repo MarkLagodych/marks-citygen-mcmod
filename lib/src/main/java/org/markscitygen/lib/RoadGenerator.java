@@ -3,13 +3,13 @@ package org.markscitygen.lib;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.markscitygen.lib.core.Path2;
+import org.markscitygen.lib.core.RasterPath2;
 import org.markscitygen.lib.core.Vec2;
 import org.markscitygen.lib.tensorfield.FieldIntegrator2;
 import org.markscitygen.lib.tensorfield.TensorField2;
 
 public final class RoadGenerator {
-    final ArrayList<Path2> roads = new ArrayList<>();
+    final ArrayList<RasterPath2> roads = new ArrayList<>();
     final RoadDensityChecker majorRoadDensityChecker;
     final RoadDensityChecker minorRoadDensityChecker;
 
@@ -27,6 +27,8 @@ public final class RoadGenerator {
     final double minGrowLength;
     final double proximityThreshold;
 
+    public ArrayList<Integer> initialSizes = new ArrayList<>();
+
     private RoadGenerator(Builder builder) {
         this.field = builder.field;
         this.bounds = builder.bounds;
@@ -40,7 +42,8 @@ public final class RoadGenerator {
 
         this.majorRoadDensityChecker = new RoadDensityChecker(bounds, crossingDistance);
         this.minorRoadDensityChecker = new RoadDensityChecker(bounds, crossingDistance);
-        this.intersectionFinder = new RoadIntersectionFinder(bounds, proximityThreshold);
+        this.intersectionFinder =
+                new RoadIntersectionFinder((int) Math.ceil(bounds.x), (int) Math.ceil(bounds.y));
 
         this.fieldIntegrator = new FieldIntegrator2(field, stepSize);
     }
@@ -113,12 +116,13 @@ public final class RoadGenerator {
         }
     }
 
-    public ArrayList<Path2> getGeneratedRoads() {
+    public ArrayList<RasterPath2> getGeneratedRoads() {
         return roads;
     }
 
     public void generateRoads(int numRoads) {
         var seeds = new ArrayDeque<RoadSeed>();
+        var tracers = new ArrayList<RoadTracer>();
 
         for (int i = 0; i < numRoads; i++) {
             var seed = RoadSeed.randomInBounds(bounds);
@@ -127,104 +131,128 @@ public final class RoadGenerator {
 
         while (!seeds.isEmpty()) {
             var seed = seeds.pollFirst();
-            var road = generateRoad(seed);
-            if (road == null) {
+
+            var tracer = generateRoad(seed);
+            if (tracer == null) {
                 continue;
             }
 
-            roads.add(road);
-            intersectionFinder.add(road, roads.size() - 1);
+            tracers.add(tracer);
+            roads.add(tracer.path);
+            intersectionFinder.add(tracer.path, roads.size() - 1);
 
-            (seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker).add(road);
+            (seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker).add(tracer.path);
 
-            placeSeeds(road, seed.isMinorLine, seeds);
+            placeSeeds(tracer.path, seed.isMinorLine, seeds);
+        }
+        for (int i = 0; i < roads.size(); i++) {
+            continueRoad(tracers.get(i), i);
         }
     }
 
     /// @return null if failed to generate a road (e.g. if the road is too short)
-    public Path2 generateRoad(RoadSeed seed) {
-        var path = new Path2(seed.point);
+    RoadTracer generateRoad(RoadSeed seed) {
+        var tracer = new RoadTracer(fieldIntegrator, seed);
 
         var totalLength = 0.0;
-        var prevPoint = seed.point;
-        var prevGrowDirection = seed.growDirection;
         var wentFarFromSeed = false;
 
         var roadDensityChecker =
                 seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
 
-        var shouldFindIntersection = false;
-        var intersectionFound = false;
-        var mainPoints = 0;
-        var mainLength = 0.0;
-
         for (int points = 0; points < maxPoints; points++) {
-            var point =
-                    fieldIntegrator.getNextPoint(prevPoint, seed.isMinorLine, prevGrowDirection);
+            tracer.nextPoint();
 
-            if (!point.isInBounds(bounds)) {
+            if (!tracer.point.isInBounds(bounds)) {
                 break;
             }
 
-            var growDirection = prevPoint.directionTo(point);
-
-            var growLength = growDirection.length();
+            var growLength = tracer.growDirection.length();
 
             if (growLength < minGrowLength) {
                 // Hit a degenerate point in the tensor field, cannot grow anymore
                 break;
             }
 
-            if (!wentFarFromSeed && !point.isCloseTo(seed.point, proximityThreshold)) {
+            if (!wentFarFromSeed && !tracer.point.isCloseTo(seed.point, proximityThreshold)) {
                 wentFarFromSeed = true;
-            } else if (wentFarFromSeed && point.isCloseTo(seed.point, proximityThreshold)) {
-                path.close();
-                path.add(point);
+            } else if (wentFarFromSeed && tracer.point.isCloseTo(seed.point, proximityThreshold)) {
+                tracer.acceptPoint();
+                tracer.path.close();
                 break;
             }
 
-            if (!shouldFindIntersection) {
-                if (roadDensityChecker.checkTooDenseNear(point)
-                        || totalLength + growLength >= maxRoadLength) {
-                    shouldFindIntersection = true;
-                    mainPoints = points;
-                    mainLength = totalLength;
-                }
-            } else {
-                if (totalLength + growLength >= mainLength + crossingDistance) {
-                    break;
-                }
+            if (roadDensityChecker.checkTooDenseNear(tracer.point)
+                    || totalLength + growLength >= maxRoadLength) {
+                break;
             }
 
-            path.add(point);
-
-            if (shouldFindIntersection) {
-                var intersection =
-                        intersectionFinder.findFirstIntersection(roads, prevPoint, point);
-                if (intersection != null) {
-                    intersectionFound = true;
-                    break;
-                }
-            }
-
-            prevPoint = point;
-            prevGrowDirection = growDirection;
+            tracer.acceptPoint();
             totalLength += growLength;
-        }
-
-        if (shouldFindIntersection && !intersectionFound) {
-            path.size(mainPoints);
-            totalLength = mainLength;
         }
 
         if (totalLength < minRoadLength) {
             return null;
         }
 
-        return path;
+        return tracer;
     }
 
-    private void placeSeeds(Path2 road, boolean isMinorLine, Collection<RoadSeed> seeds) {
+    void continueRoad(RoadTracer tracer, int pathId) {
+
+        var totalGrowLength = 0.0;
+
+        var initialSize = tracer.path.size();
+        initialSizes.add(initialSize);
+
+        if (tracer.path.isClosed()) {
+            return;
+        }
+
+        for (; ; ) {
+            tracer.nextPoint();
+
+            if (!tracer.point.isInBounds(bounds)) {
+                break;
+            }
+
+            var growLength = tracer.growDirection.length();
+
+            if (growLength < minGrowLength) {
+                // Hit a degenerate point in the tensor field, cannot grow anymore
+                break;
+            }
+
+            if (totalGrowLength + growLength >= crossingDistance) {
+                break;
+            }
+
+            totalGrowLength += growLength;
+
+            var sizeBeforeAdd = tracer.path.size();
+
+            tracer.acceptPoint();
+
+            if (tracer.point.isCloseTo(tracer.seedPoint, proximityThreshold)) {
+                tracer.path.close();
+                return;
+            }
+
+            var intersection =
+                    intersectionFinder.findIntersection(tracer.path, sizeBeforeAdd + 1, pathId);
+            if (intersection != null) {
+                tracer.path.size(intersection.pointIndex() + 1);
+                tracer.path.add(intersection.pointX(), intersection.pointY());
+                return;
+            }
+        }
+
+        tracer.path.size(initialSize);
+    }
+
+    private void placeSeeds(RasterPath2 road, boolean isMinorLine, Collection<RoadSeed> seeds) {
+        seeds.add(new RoadSeed(road.getPoint(0), !isMinorLine, road.getDirectionAt(0)));
+
         var length = 0.0;
         for (int i = 0; i < road.segmentCount(); i++) {
             length += road.getSegmentLength(i);

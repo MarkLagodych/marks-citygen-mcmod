@@ -1,6 +1,6 @@
 package org.markscitygen.lib;
 
-import org.markscitygen.lib.core.Path2;
+import org.markscitygen.lib.core.RasterPath2;
 import org.markscitygen.lib.core.Vec2;
 
 /// Searches for nearby roads in a constant radius in 2D space.
@@ -39,7 +39,7 @@ class RoadDensityChecker {
         return (int) Math.floor(x * coordToCellIndex) + CELL_PADDING;
     }
 
-    public void add(Path2 road) {
+    public void add(RasterPath2 road) {
         for (int i = 0; i < road.size(); i++) {
             var x = road.getX(i);
             var y = road.getY(i);

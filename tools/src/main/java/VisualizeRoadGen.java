@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 import org.markscitygen.lib.RoadGenerator;
-import org.markscitygen.lib.core.Path2;
+import org.markscitygen.lib.core.RasterPath2;
 import org.markscitygen.lib.core.Vec2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
@@ -36,7 +36,7 @@ public class VisualizeRoadGen extends PApplet {
                             100)
                     .build();
 
-    ArrayList<Path2> roads;
+    ArrayList<RasterPath2> roads;
 
     void genRoads() {
         var gen =
