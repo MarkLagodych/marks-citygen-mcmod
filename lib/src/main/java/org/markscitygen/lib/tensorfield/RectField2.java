@@ -9,6 +9,10 @@ public final class RectField2 implements TensorField2 {
         this.tensor = tensor;
     }
 
+    public RectField2(double angle, double magnitude) {
+        this(STTensor2.fromMajorEigenvector(Vec2.fromPolar(angle, magnitude)));
+    }
+
     @Override
     public STTensor2 getTensorAt(Vec2 point) {
         return new STTensor2(tensor);

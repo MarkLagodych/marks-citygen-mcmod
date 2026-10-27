@@ -65,8 +65,24 @@ final class RoadIntersectionFinder {
     }
 
     /// @return null if no intersection found
-    public Intersection findIntersection(RasterPath2 path, int startIndex, int pathId) {
+    public Intersection findFirstIntersection(RasterPath2 path, int startIndex, int pathId) {
         for (int i = startIndex; i < path.size(); i++) {
+            var x = path.getX(i);
+            var y = path.getY(i);
+
+            var intersection = getIntersectionNear(x, y, i, pathId);
+
+            if (intersection != null) {
+                return intersection;
+            }
+        }
+
+        return null;
+    }
+
+    /// @return null if no intersection found
+    public Intersection findLastIntersection(RasterPath2 path, int pathId) {
+        for (int i = path.size() - 1; i >= 0; i--) {
             var x = path.getX(i);
             var y = path.getY(i);
 

@@ -96,7 +96,7 @@ public class RasterPath2 {
     }
 
     public void add(Vec2 point) {
-        add((int) point.x, (int) point.y);
+        add((int) Math.round(point.x), (int) Math.round(point.y));
     }
 
     public void add(RasterPath2 other) {

@@ -4,7 +4,6 @@ import org.markscitygen.lib.core.RasterPath2;
 import org.markscitygen.lib.core.Vec2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
-import org.markscitygen.lib.tensorfield.STTensor2;
 import org.markscitygen.lib.tensorfield.SumField2;
 import processing.core.PApplet;
 
@@ -19,21 +18,11 @@ public class VisualizeRoadGen extends PApplet {
 
     final SumField2 field =
             new SumField2.Builder()
-                    .add(new RadialField2(new Vec2(100, 100)), new Vec2(100, 100), 100)
-                    .add(new RadialField2(new Vec2(400, 100)), new Vec2(500, 100), 100)
-                    .add(new RadialField2(new Vec2(300, 300)), new Vec2(300, 300), 50)
-                    .add(
-                            new RectField2(
-                                    STTensor2.fromMajorEigenvector(
-                                            Vec2.fromPolar(Math.PI / 6, 0.5))),
-                            new Vec2(0, 0),
-                            Double.POSITIVE_INFINITY)
-                    .add(
-                            new RectField2(
-                                    STTensor2.fromMajorEigenvector(
-                                            Vec2.fromPolar(Math.PI / 3, 0.5))),
-                            new Vec2(500, 400),
-                            100)
+                    .add(new RadialField2(new Vec2(200, 200)), new Vec2(200, 200), 100)
+                    .add(new RadialField2(new Vec2(500, 300)), new Vec2(600, 300), 100)
+                    .add(new RadialField2(new Vec2(600, 120)), new Vec2(600, 120), 70)
+                    .add(new RectField2(Math.PI / 6, 0.5), new Vec2(0, 0), Double.POSITIVE_INFINITY)
+                    .add(new RectField2(-Math.PI / 4, 0.5), new Vec2(400, 400), 150)
                     .build();
 
     ArrayList<RasterPath2> roads;
