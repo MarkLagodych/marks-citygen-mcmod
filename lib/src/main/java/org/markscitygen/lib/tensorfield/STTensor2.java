@@ -19,7 +19,7 @@ import org.markscitygen.lib.core.Vec2;
 /// are of the same length, and are fast to compute (no eigenvalue decomposition needed).
 ///
 /// To get the minor eigenvector, simply rotate the major eigenvector by π/2
-/// using {@link Vec2#rotatePiHalf()}.
+/// using {@link Vec2#rotateLeft()}.
 public final class STTensor2 {
     /// To avoid data duplication, only the X and Y components are stored.
     private final Vec2 xy;

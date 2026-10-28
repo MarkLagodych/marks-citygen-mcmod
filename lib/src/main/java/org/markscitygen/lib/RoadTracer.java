@@ -23,11 +23,11 @@ final class RoadTracer {
 
     double growLength;
 
-    RoadTracer(RoadSeed seed, FieldIntegrator2 fieldIntegrator, double minGrowLength) {
+    RoadTracer(RoadSeed seed, FieldIntegrator2 fieldIntegrator, double minGrowLength, int pathId) {
         this.fieldIntegrator = fieldIntegrator;
         this.seedPoint = seed.point;
         this.isMinorLine = seed.isMinorLine;
-        this.pathId = seed.pathId;
+        this.pathId = pathId;
         this.minGrowLength = minGrowLength;
         this.path = new RasterPath2(seed.point);
         this.prevPoint = seed.point;

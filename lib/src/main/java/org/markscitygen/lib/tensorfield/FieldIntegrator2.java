@@ -13,7 +13,7 @@ public class FieldIntegrator2 {
 
     private Vec2 getGrowDirectionAt(Vec2 point, boolean isMinorLine, Vec2 prevGrowDirection) {
         var growDirection = field.getTensorAt(point).getMajorEigenvector();
-        if (isMinorLine) growDirection.rotatePiHalf();
+        if (isMinorLine) growDirection.rotateLeft();
         growDirection.alignWith(prevGrowDirection);
         return growDirection;
     }

@@ -195,18 +195,33 @@ public final class Vec2 {
         return this.x >= min.x && this.x < max.x && this.y >= min.y && this.y < max.y;
     }
 
-    /// Rotates the vector by π/2 radians (90 degrees) counterclockwise.
-    public void rotatePiHalf() {
+    /// Rotates the vector by π/2 radians (90 degrees) counterclockwise (left).
+    public void rotateLeft() {
         var tmp = x;
         x = -y;
         y = tmp;
     }
 
+    public Vec2 rotatedLeft() {
+        return new Vec2(-y, x);
+    }
+
+    /// @return true if the angle between `this` and `other` is in [0, π/2].
+    public boolean isAlignedWith(Vec2 other) {
+        return this.dot(other) >= 0;
+    }
+
     /// Either negates `this` vector or does nothing.
     /// The resulting angle between `this` and `other` is in [0, π/2].
+    ///
+    /// @see #isAlignedWith()
     public void alignWith(Vec2 other) {
-        if (this.dot(other) <= 0) {
+        if (!isAlignedWith(other)) {
             negate();
         }
+    }
+
+    public boolean looksLeftOf(Vec2 base) {
+        return this.isAlignedWith(base.rotatedLeft());
     }
 }

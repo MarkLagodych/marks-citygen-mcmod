@@ -26,8 +26,6 @@ public final class RoadGenerator {
     final double minGrowLength;
     final double proximityThreshold;
 
-    int nextPathId = 0;
-
     private RoadGenerator(Builder builder) {
         this.field = builder.field;
         this.bounds = builder.bounds;
@@ -122,9 +120,10 @@ public final class RoadGenerator {
     public void generateRoads(int numRoads) {
         var seeds = new PriorityQueue<RoadSeedWithPriority>();
         var tracers = new ArrayList<RoadTracer>();
+        var pathId = 0;
 
         for (int i = 0; i < numRoads; i++) {
-            var seed = RoadSeed.randomInBounds(bounds, nextPathId++);
+            var seed = RoadSeed.randomInBounds(bounds);
             seeds.add(new RoadSeedWithPriority(seed, 0));
         }
 
@@ -132,10 +131,12 @@ public final class RoadGenerator {
             var queueItem = seeds.poll();
             var seed = queueItem.seed;
 
-            var tracer = generateRoad(seed);
+            var tracer = generateRoad(seed, pathId);
             if (tracer == null) {
                 continue;
             }
+
+            pathId++;
 
             tracers.add(tracer);
 
@@ -163,8 +164,8 @@ public final class RoadGenerator {
     }
 
     /// @return null if failed to generate a road (e.g. if the road is too short)
-    RoadTracer generateRoad(RoadSeed seed) {
-        final var tracer = new RoadTracer(seed, fieldIntegrator, minGrowLength);
+    RoadTracer generateRoad(RoadSeed seed, int pathId) {
+        final var tracer = new RoadTracer(seed, fieldIntegrator, minGrowLength, pathId);
 
         final var roadDensityChecker =
                 seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
@@ -263,8 +264,7 @@ public final class RoadGenerator {
             PriorityQueue<RoadSeedWithPriority> seeds,
             int priority) {
 
-        var firstSeed =
-                new RoadSeed(road.getPoint(0), !isMinorLine, road.getDirectionAt(0), nextPathId++);
+        var firstSeed = new RoadSeed(road.getPoint(0), !isMinorLine, road.getDirectionAt(0));
 
         seeds.add(new RoadSeedWithPriority(firstSeed, priority));
 
@@ -275,12 +275,7 @@ public final class RoadGenerator {
             if (length > crossingDistance) {
                 length = 0.0;
 
-                var seed =
-                        new RoadSeed(
-                                road.getPoint(i),
-                                !isMinorLine,
-                                road.getDirectionAt(i),
-                                nextPathId++);
+                var seed = new RoadSeed(road.getPoint(i), !isMinorLine, road.getDirectionAt(i));
 
                 seeds.add(new RoadSeedWithPriority(seed, priority));
             }
