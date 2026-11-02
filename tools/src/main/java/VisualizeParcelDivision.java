@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import org.markscitygen.lib.ParcelFinder;
 import org.markscitygen.lib.RoadGenerator;
 import org.markscitygen.lib.RoadIntersectionFinder;
@@ -29,7 +28,7 @@ public class VisualizeParcelDivision extends PApplet {
                     .build();
 
     ArrayList<RasterPath2> roads;
-    HashMap<Integer, ArrayList<RoadIntersectionFinder.DirectedCrossing>> crossings;
+    ArrayList<ArrayList<RoadIntersectionFinder.DirectedCrossing>> crossings;
     boolean showCrossings = true;
 
     void genRoads() {
@@ -75,18 +74,14 @@ public class VisualizeParcelDivision extends PApplet {
         stroke(0xffffffff);
         strokeWeight(1);
 
-        var cnt = 0;
         for (var road : roads) {
-            // var clr = 0xff000000 | (int) (Math.random() * 0xffffff);
-            // stroke(clr);
+            var clr = 0xff000000 | (int) (Math.random() * 0xffffff);
+            stroke(clr);
             for (int i = 0; i < road.size() - 1; i++) {
                 var point = road.getPoint(i);
                 point((float) point.x, (float) point.y);
             }
-            // IO.readln();
-            cnt += road.size();
         }
-        IO.println(cnt);
 
         if (showCrossings) {
             for (int i = 0; i < roads.size(); i++) {
@@ -118,13 +113,25 @@ public class VisualizeParcelDivision extends PApplet {
                     //     point((float) nextPoint.x, (float) nextPoint.y);
                     // }
 
-                    var nearbyPointId = Math.max(crossing.intersectedPointId() - 20, 0);
+                    var needsReverse = false;
+
+                    var nearbyPointId = crossing.intersectedPointId() - 10;
+                    if (nearbyPointId < 0) {
+                        nearbyPointId = crossing.intersectedPointId() + 10;
+                        needsReverse = true;
+                    }
+                    if (nearbyPointId < 0 || nearbyPointId >= intersectedRoad.size()) {
+                        continue;
+                    }
 
                     var nearbyPoint = intersectedRoad.getPoint(nearbyPointId);
 
                     var segmentDirection = intersectedPoint.directionTo(nearbyPoint);
 
                     // segmentDirection.mul(10.0);
+                    if (needsReverse) {
+                        segmentDirection.negate();
+                    }
 
                     if (!crossing.intersectedPathGoesLeft()) {
                         segmentDirection.negate();

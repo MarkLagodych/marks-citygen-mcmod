@@ -120,22 +120,9 @@ public class RasterPath2 {
     }
 
     public double getSegmentLength(int segmentIndex) {
+        // TODO should this be optimized? This only ever returns 0, 1, or sqrt(2)
         var dx = getX(segmentIndex + 1) - getX(segmentIndex);
         var dy = getY(segmentIndex + 1) - getY(segmentIndex);
         return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    public Vec2 getDirectionAt(int segmentIndex) {
-        var dx = getX(segmentIndex + 1) - getX(segmentIndex);
-        var dy = getY(segmentIndex + 1) - getY(segmentIndex);
-        return new Vec2(dx, dy);
-    }
-
-    public Vec2 getLastSegmentDirection() {
-        var size = size();
-        if (size < 2) {
-            throw new IndexOutOfBoundsException("Path has less than 2 points");
-        }
-        return getDirectionAt(size - 2);
     }
 }

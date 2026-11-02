@@ -15,6 +15,10 @@ public final class RoadIntersectionFinder {
     /// intersections for the same crossing.
     private static final int COOLDOWN_DISTANCE = 5;
 
+    /// To get a direction at a given point at index `i` on a rasterized path, the algorithm takes
+    /// a vector between two points at indexs `i-DIRECTION_RADIUS` and `i+DIRECTION_RADIUS`.
+    private static final int DIRECTION_RADIUS = 5;
+
     /// This many cells are added to each side of the bounding box to avoid edge cases
     /// where a point is near the edge of the bounding box.
     private static final int CELL_PADDING = RADIUS + 1;
@@ -91,7 +95,7 @@ public final class RoadIntersectionFinder {
     }
 
     /// Lists all intersections with path IDs > given pathId.
-    private void listNewIntersectionsNear(
+    private void listUniqueIntersectionsNear(
             int pointX, int pointY, int pointIndex, int pathId, Intersection[] intersections) {
 
         var intersectionCount = 0;
@@ -150,7 +154,8 @@ public final class RoadIntersectionFinder {
         return null;
     }
 
-    public ArrayList<DirectedCrossing> findDirectedCrossings(
+    /// Finds all directed crossings with *new* paths (with path ID > given pathId)
+    public ArrayList<DirectedCrossing> findUniqueDirectedCrossings(
             ArrayList<RasterPath2> paths, int pathId) {
 
         var path = paths.get(pathId);
@@ -168,7 +173,7 @@ public final class RoadIntersectionFinder {
             var y = path.getY(pointId);
 
             var intersections = new Intersection[NEIGHBOURHOOD_SIZE];
-            listNewIntersectionsNear(x, y, pointId, pathId, intersections);
+            listUniqueIntersectionsNear(x, y, pointId, pathId, intersections);
 
             outer:
             for (int i = 0; i < intersections.length; i++) {
@@ -212,14 +217,14 @@ public final class RoadIntersectionFinder {
     /// "Goes" suggests path traversal in the direction of increasing point indexes.
     /// "Left" is relative to the direction of the path that is being intersected.
     public static record DirectedCrossing(
-            int pointIndex,
+            int pointId,
             int intersectedPathId,
             int intersectedPointId,
             boolean intersectedPathGoesLeft) {
 
         static DirectedCrossing find(
                 RasterPath2 path,
-                int pointIndex,
+                int pointId,
                 RasterPath2 intersectedPath,
                 int intersectedPathId,
                 int intersectedPointIndex) {
@@ -228,18 +233,31 @@ public final class RoadIntersectionFinder {
                 throw new IllegalArgumentException("Paths must have at least 1 segment");
             }
 
-            var baseSegmentIndex = Math.max(pointIndex - 1, 0);
+            var basePointId0 = Math.max(pointId - DIRECTION_RADIUS, 0);
+            var basePointId1 = Math.min(pointId + DIRECTION_RADIUS, path.size() - 1);
 
-            var intersectedSegmentIndex =
-                    Math.min(intersectedPointIndex, intersectedPath.segmentCount() - 1);
+            var intersectedPointId0 = Math.max(intersectedPointIndex - DIRECTION_RADIUS, 0);
+            var intersectedPointId1 =
+                    Math.min(intersectedPointIndex + DIRECTION_RADIUS, intersectedPath.size() - 1);
 
-            var baseSegment = path.getDirectionAt(baseSegmentIndex);
-            var intersectedSegment = intersectedPath.getDirectionAt(intersectedSegmentIndex);
+            var basePoint0 = path.getPoint(basePointId0);
+            var basePoint1 = path.getPoint(basePointId1);
+
+            var intersectedPoint0 = intersectedPath.getPoint(intersectedPointId0);
+            var intersectedPoint1 = intersectedPath.getPoint(intersectedPointId1);
+
+            var baseSegment = basePoint0.directionTo(basePoint1);
+            var intersectedSegment = intersectedPoint0.directionTo(intersectedPoint1);
 
             var goesLeft = intersectedSegment.looksLeftOf(baseSegment);
 
             return new DirectedCrossing(
-                    pointIndex, intersectedPathId, intersectedPointIndex, goesLeft);
+                    pointId, intersectedPathId, intersectedPointIndex, goesLeft);
+        }
+
+        public DirectedCrossing reverse(int thisPathId) {
+            return new DirectedCrossing(
+                    intersectedPointId, thisPathId, pointId, !intersectedPathGoesLeft);
         }
     }
 }

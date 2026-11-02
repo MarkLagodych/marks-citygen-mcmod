@@ -1,7 +1,6 @@
 package org.markscitygen.lib;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import org.markscitygen.lib.core.RasterPath2;
 
 public final class ParcelFinder {
@@ -13,20 +12,36 @@ public final class ParcelFinder {
         this.roads = roads;
     }
 
-    public HashMap<Integer, ArrayList<RoadIntersectionFinder.DirectedCrossing>> findAllCrossings() {
-        var crossings = new HashMap<Integer, ArrayList<RoadIntersectionFinder.DirectedCrossing>>();
+    public ArrayList<ArrayList<RoadIntersectionFinder.DirectedCrossing>> findAllCrossings() {
+        var allCrossings = new ArrayList<ArrayList<RoadIntersectionFinder.DirectedCrossing>>();
 
-        for (int i = 0; i < roads.size(); i++) {
-            var path = roads.get(i);
-            intersectionFinder.add(path, i);
+        for (int pathId = 0; pathId < roads.size(); pathId++) {
+            var path = roads.get(pathId);
+            intersectionFinder.add(path, pathId);
         }
 
-        for (int i = 0; i < roads.size(); i++) {
-            var roadCrossings = intersectionFinder.findDirectedCrossings(roads, i);
+        for (int pathId = 0; pathId < roads.size(); pathId++) {
+            var roadCrossings = intersectionFinder.findUniqueDirectedCrossings(roads, pathId);
 
-            crossings.put(i, roadCrossings);
+            allCrossings.add(roadCrossings);
         }
 
-        return crossings;
+        for (int pathId = 0; pathId < roads.size(); pathId++) {
+            var roadCrossings = allCrossings.get(pathId);
+
+            for (var crossing : roadCrossings) {
+                var intersectedRoadCrossings = allCrossings.get(crossing.intersectedPathId());
+                intersectedRoadCrossings.add(crossing.reverse(pathId));
+            }
+        }
+
+        for (var roadCrossings : allCrossings) {
+            roadCrossings.sort(
+                    (crossing1, crossing2) -> {
+                        return Integer.compare(crossing1.pointId(), crossing2.pointId());
+                    });
+        }
+
+        return allCrossings;
     }
 }

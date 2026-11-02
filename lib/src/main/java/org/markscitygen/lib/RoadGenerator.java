@@ -267,21 +267,18 @@ public final class RoadGenerator {
             PriorityQueue<RoadSeedWithPriority> seeds,
             int priority) {
 
-        var firstSeed = new RoadSeed(road.getPoint(0), !isMinorLine, road.getDirectionAt(0));
-
-        seeds.add(new RoadSeedWithPriority(firstSeed, priority));
-
         var length = 0.0;
+
         for (int i = 0; i < road.segmentCount(); i++) {
-            length += road.getSegmentLength(i);
 
-            if (length > crossingDistance) {
-                length = 0.0;
+            if (length <= 0) {
+                length = crossingDistance;
 
-                var seed = new RoadSeed(road.getPoint(i), !isMinorLine, road.getDirectionAt(i));
-
+                var seed = new RoadSeed(road.getPoint(i), !isMinorLine);
                 seeds.add(new RoadSeedWithPriority(seed, priority));
             }
+
+            length -= road.getSegmentLength(i);
         }
     }
 

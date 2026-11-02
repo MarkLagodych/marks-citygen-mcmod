@@ -202,7 +202,7 @@ public final class Vec2 {
         y = tmp;
     }
 
-    public Vec2 rotatedLeft() {
+    public Vec2 intoRotatedLeft() {
         return new Vec2(-y, x);
     }
 
@@ -222,6 +222,6 @@ public final class Vec2 {
     }
 
     public boolean looksLeftOf(Vec2 base) {
-        return this.isAlignedWith(base.rotatedLeft());
+        return this.isAlignedWith(base.intoRotatedLeft());
     }
 }
