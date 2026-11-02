@@ -47,7 +47,7 @@ public class VisualizeParcelDivision extends PApplet {
         var time1 = System.nanoTime();
 
         roads = gen.generateRoads(30);
-        var parcelFinder = new ParcelFinder(roads);
+        var parcelFinder = new ParcelFinder(roads, new Vec2(800, 600));
         crossings = parcelFinder.findAllCrossings();
 
         var time2 = System.nanoTime();

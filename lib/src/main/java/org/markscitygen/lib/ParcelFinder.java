@@ -2,14 +2,17 @@ package org.markscitygen.lib;
 
 import java.util.ArrayList;
 import org.markscitygen.lib.core.RasterPath2;
+import org.markscitygen.lib.core.Vec2;
 
 public final class ParcelFinder {
     ArrayList<RasterPath2> roads;
 
-    RoadIntersectionFinder intersectionFinder = new RoadIntersectionFinder(800, 600);
+    final RoadIntersectionFinder intersectionFinder;
 
-    public ParcelFinder(ArrayList<RasterPath2> roads) {
+    public ParcelFinder(ArrayList<RasterPath2> roads, Vec2 bounds) {
         this.roads = roads;
+        this.intersectionFinder =
+                new RoadIntersectionFinder((int) Math.ceil(bounds.x), (int) Math.ceil(bounds.y));
     }
 
     public ArrayList<ArrayList<RoadIntersectionFinder.DirectedCrossing>> findAllCrossings() {
