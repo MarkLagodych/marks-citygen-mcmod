@@ -78,9 +78,11 @@ public class RasterPath2 {
         var sy = y0 < y ? 1 : -1;
         var err = dx - dy;
 
-        while (!(x0 == x && y0 == y)) {
-            addRaw(x0, y0);
+        if (dx == 0 && dy == 0) {
+            return;
+        }
 
+        do {
             var err2 = 2 * err;
 
             if (err2 > -dy) {
@@ -92,7 +94,9 @@ public class RasterPath2 {
                 err += dx;
                 y0 += sy;
             }
-        }
+
+            addRaw(x0, y0);
+        } while (!(x0 == x && y0 == y));
     }
 
     public void add(Vec2 point) {

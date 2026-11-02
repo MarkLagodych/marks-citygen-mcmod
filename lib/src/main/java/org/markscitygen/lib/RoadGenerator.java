@@ -8,7 +8,6 @@ import org.markscitygen.lib.tensorfield.FieldIntegrator2;
 import org.markscitygen.lib.tensorfield.TensorField2;
 
 public final class RoadGenerator {
-    final ArrayList<RasterPath2> roads = new ArrayList<>();
     final RoadDensityChecker majorRoadDensityChecker;
     final RoadDensityChecker minorRoadDensityChecker;
 
@@ -113,16 +112,13 @@ public final class RoadGenerator {
         }
     }
 
-    public ArrayList<RasterPath2> getGeneratedRoads() {
-        return roads;
-    }
-
-    public void generateRoads(int numRoads) {
+    public ArrayList<RasterPath2> generateRoads(int initialSeedCount) {
+        var roads = new ArrayList<RasterPath2>();
         var seeds = new PriorityQueue<RoadSeedWithPriority>();
         var tracers = new ArrayList<RoadTracer>();
         var pathId = 0;
 
-        for (int i = 0; i < numRoads; i++) {
+        for (int i = 0; i < initialSeedCount; i++) {
             var seed = RoadSeed.randomInBounds(bounds);
             seeds.add(new RoadSeedWithPriority(seed, 0));
         }
@@ -157,10 +153,14 @@ public final class RoadGenerator {
 
         for (var tracer : tracers) {
             // TODO use a clearer constant for minimal point size of a trimmed road
-            if (tracer.path.size() < Math.ceil(minRoadLength)) continue;
+            if (tracer.path.size() < Math.ceil(minRoadLength)) {
+                continue;
+            }
 
             roads.add(tracer.path);
         }
+
+        return roads;
     }
 
     /// @return null if failed to generate a road (e.g. if the road is too short)
@@ -250,7 +250,10 @@ public final class RoadGenerator {
 
             if (intersection != null) {
                 tracer.path.size(intersection.pointIndex() + 1);
-                tracer.path.add(intersection.pointX(), intersection.pointY());
+
+                // TODO do we need this?
+                // tracer.path.add(intersection.pointX(), intersection.pointY());
+
                 return;
             }
         }
@@ -293,7 +296,10 @@ public final class RoadGenerator {
 
         if (intersection != null) {
             path.size(intersection.pointIndex() + 1);
-            path.add(intersection.pointX(), intersection.pointY());
+
+            // TODO do we need this?
+            // path.add(intersection.pointX(), intersection.pointY());
+
         } else {
             path.size(0);
         }

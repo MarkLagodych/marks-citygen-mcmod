@@ -3,13 +3,21 @@ package org.markscitygen.lib;
 import java.util.ArrayList;
 import org.markscitygen.lib.core.RasterPath2;
 
-final class RoadIntersectionFinder {
+public final class RoadIntersectionFinder {
     /// The square "radius" of the area around a point that is checked for intersections.
     private static final int RADIUS = 1;
 
+    private static final int NEIGHBOURHOOD_SIDE = 2 * RADIUS + 1;
+
+    private static final int NEIGHBOURHOOD_SIZE = NEIGHBOURHOOD_SIDE * NEIGHBOURHOOD_SIDE;
+
+    /// The distance which the finder ignores around a crossing to avoid reporting multiple
+    /// intersections for the same crossing.
+    private static final int COOLDOWN_DISTANCE = 5;
+
     /// This many cells are added to each side of the bounding box to avoid edge cases
     /// where a point is near the edge of the bounding box.
-    private static final int CELL_PADDING = RADIUS;
+    private static final int CELL_PADDING = RADIUS + 1;
 
     private static final long EMPTY_CELL = 0;
 
@@ -82,6 +90,34 @@ final class RoadIntersectionFinder {
         return null;
     }
 
+    /// Lists all intersections with path IDs > given pathId.
+    private void listNewIntersectionsNear(
+            int pointX, int pointY, int pointIndex, int pathId, Intersection[] intersections) {
+
+        var intersectionCount = 0;
+
+        for (int x = pointX - RADIUS; x <= pointX + RADIUS; x++) {
+            for (int y = pointY - RADIUS; y <= pointY + RADIUS; y++) {
+                var cellValue = getCell(x, y);
+
+                if (cellValue == EMPTY_CELL) {
+                    continue;
+                }
+
+                var cellPathId = decodeCellPathId(cellValue);
+
+                if (cellPathId <= pathId) {
+                    continue;
+                }
+
+                var cellPointId = decodeCellSegmentId(cellValue);
+
+                intersections[intersectionCount++] =
+                        new Intersection(x, y, pointIndex, cellPathId, cellPointId);
+            }
+        }
+    }
+
     /// @return null if no intersection found
     public Intersection findFirstIntersection(RasterPath2 path, int startIndex, int pathId) {
         for (int i = startIndex; i < path.size(); i++) {
@@ -120,22 +156,45 @@ final class RoadIntersectionFinder {
         var path = paths.get(pathId);
         var directedCrossings = new ArrayList<DirectedCrossing>();
 
-        for (int i = 0; i < path.size(); i++) {
-            var x = path.getX(i);
-            var y = path.getY(i);
+        var cooldown = 0;
 
-            var intersection = getIntersectionNear(x, y, i, pathId);
+        for (int pointId = 0; pointId < path.size(); pointId++) {
+            if (cooldown > 0) {
+                cooldown--;
+                continue;
+            }
 
-            if (intersection != null) {
+            var x = path.getX(pointId);
+            var y = path.getY(pointId);
+
+            var intersections = new Intersection[NEIGHBOURHOOD_SIZE];
+            listNewIntersectionsNear(x, y, pointId, pathId, intersections);
+
+            outer:
+            for (int i = 0; i < intersections.length; i++) {
+                var intersection = intersections[i];
+
+                if (intersection == null) {
+                    break;
+                }
+
+                for (int j = 0; j < i; j++) {
+                    if (intersections[j].intersectedPathId == intersection.intersectedPathId) {
+                        continue outer;
+                    }
+                }
+
                 var directedCrossing =
                         DirectedCrossing.find(
                                 path,
-                                i,
+                                pointId,
                                 paths.get(intersection.intersectedPathId()),
                                 intersection.intersectedPathId(),
                                 intersection.intersectedPointId());
 
                 directedCrossings.add(directedCrossing);
+
+                cooldown = COOLDOWN_DISTANCE;
             }
         }
 
@@ -152,8 +211,11 @@ final class RoadIntersectionFinder {
     /// @param intersectedPathGoesLeft True if the intersected path goes left from the intersection.
     /// "Goes" suggests path traversal in the direction of increasing point indexes.
     /// "Left" is relative to the direction of the path that is being intersected.
-    record DirectedCrossing(
-            int intersectedPathId, int intersectedPointId, boolean intersectedPathGoesLeft) {
+    public static record DirectedCrossing(
+            int pointIndex,
+            int intersectedPathId,
+            int intersectedPointId,
+            boolean intersectedPathGoesLeft) {
 
         static DirectedCrossing find(
                 RasterPath2 path,
@@ -176,7 +238,8 @@ final class RoadIntersectionFinder {
 
             var goesLeft = intersectedSegment.looksLeftOf(baseSegment);
 
-            return new DirectedCrossing(intersectedPathId, intersectedPointIndex, goesLeft);
+            return new DirectedCrossing(
+                    pointIndex, intersectedPathId, intersectedPointIndex, goesLeft);
         }
     }
 }
