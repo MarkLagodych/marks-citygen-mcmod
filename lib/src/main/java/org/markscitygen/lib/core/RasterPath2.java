@@ -125,4 +125,21 @@ public class RasterPath2 {
         var dy = getY(segmentIndex + 1) - getY(segmentIndex);
         return Math.sqrt(dx * dx + dy * dy);
     }
+
+    public void reverse() {
+        var elements = coords.elements();
+        var size = coords.size();
+
+        for (int i = 0, j = size - 2; i < j; i += 2, j -= 2) {
+            var x1 = elements[i];
+            var y1 = elements[i + 1];
+            var x2 = elements[j];
+            var y2 = elements[j + 1];
+
+            elements[i] = x2;
+            elements[i + 1] = y2;
+            elements[j] = x1;
+            elements[j + 1] = y1;
+        }
+    }
 }

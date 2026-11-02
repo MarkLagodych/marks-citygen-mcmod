@@ -150,6 +150,7 @@ public final class RoadGenerator {
         for (var tracer : tracers) {
             trimRoad(tracer);
         }
+        // TODO Trim reversed roads? Find all dead ends exactly?
 
         for (var tracer : tracers) {
             // TODO use a clearer constant for minimal point size of a trimmed road
