@@ -1,5 +1,9 @@
 package org.markscitygen.lib;
 
+import java.util.ArrayList;
+
 public final class Parcel {
-    public record Segment() {}
+    public ArrayList<Segment> segments;
+
+    public record Segment(int pathId, int startPointId, int endPointId) {}
 }
