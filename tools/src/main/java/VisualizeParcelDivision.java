@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import org.markscitygen.lib.Parcel;
 import org.markscitygen.lib.ParcelFinder;
 import org.markscitygen.lib.RoadGenerator;
 import org.markscitygen.lib.RoadIntersectionFinder;
@@ -29,6 +30,7 @@ public class VisualizeParcelDivision extends PApplet {
 
     ArrayList<RasterPath2> roads;
     ArrayList<ArrayList<RoadIntersectionFinder.DirectedCrossing>> crossings;
+    ArrayList<Parcel> parcels;
     boolean showCrossings = true;
 
     void genRoads() {
@@ -49,7 +51,7 @@ public class VisualizeParcelDivision extends PApplet {
         roads = gen.generateRoads(30);
         var parcelFinder = new ParcelFinder(roads, new Vec2(800, 600));
         crossings = parcelFinder.findAllCrossings();
-
+        parcels = parcelFinder.findParcels();
         var time2 = System.nanoTime();
         System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");
     }
@@ -145,6 +147,25 @@ public class VisualizeParcelDivision extends PApplet {
                             (float) (intersectedPoint.x + segmentDirection.x),
                             (float) (intersectedPoint.y + segmentDirection.y));
                 }
+            }
+        }
+
+        for (var parcel : parcels) {
+            for (var segment : parcel.segments) {
+                var road = roads.get(segment.pathId());
+                var startPoint = road.getPoint(segment.startPointId());
+                var endPoint = road.getPoint(segment.endPointId());
+
+                IO.println(startPoint);
+                IO.println(endPoint);
+
+                stroke(0x55ffffff);
+                strokeWeight(6);
+                line(
+                        (float) startPoint.x,
+                        (float) startPoint.y,
+                        (float) endPoint.x,
+                        (float) endPoint.y);
             }
         }
     }

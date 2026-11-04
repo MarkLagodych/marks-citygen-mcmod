@@ -259,5 +259,10 @@ public final class RoadIntersectionFinder {
             return new DirectedCrossing(
                     intersectedPointId, thisPathId, pointId, !intersectedPathGoesLeft);
         }
+
+        public DirectedCrossing turnBack() {
+            return new DirectedCrossing(
+                    pointId, intersectedPathId, intersectedPointId, !intersectedPathGoesLeft);
+        }
     }
 }
