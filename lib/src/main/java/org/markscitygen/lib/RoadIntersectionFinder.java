@@ -192,6 +192,7 @@ public final class RoadIntersectionFinder {
                 var directedCrossing =
                         DirectedCrossing.find(
                                 path,
+                                pathId,
                                 pointId,
                                 paths.get(intersection.intersectedPathId()),
                                 intersection.intersectedPathId(),
@@ -217,6 +218,7 @@ public final class RoadIntersectionFinder {
     /// "Goes" suggests path traversal in the direction of increasing point indexes.
     /// "Left" is relative to the direction of the path that is being intersected.
     public static record DirectedCrossing(
+            int pathId,
             int pointId,
             int intersectedPathId,
             int intersectedPointId,
@@ -224,6 +226,7 @@ public final class RoadIntersectionFinder {
 
         static DirectedCrossing find(
                 RasterPath2 path,
+                int pathId,
                 int pointId,
                 RasterPath2 intersectedPath,
                 int intersectedPathId,
@@ -252,17 +255,25 @@ public final class RoadIntersectionFinder {
             var goesLeft = intersectedSegment.looksLeftOf(baseSegment);
 
             return new DirectedCrossing(
-                    pointId, intersectedPathId, intersectedPointIndex, goesLeft);
+                    pathId, pointId, intersectedPathId, intersectedPointIndex, goesLeft);
         }
 
-        public DirectedCrossing reverse(int thisPathId) {
+        public DirectedCrossing reverse() {
             return new DirectedCrossing(
-                    intersectedPointId, thisPathId, pointId, !intersectedPathGoesLeft);
+                    intersectedPathId,
+                    intersectedPointId,
+                    pathId,
+                    pointId,
+                    !intersectedPathGoesLeft);
         }
 
         public DirectedCrossing turnBack() {
             return new DirectedCrossing(
-                    pointId, intersectedPathId, intersectedPointId, !intersectedPathGoesLeft);
+                    pathId,
+                    pointId,
+                    intersectedPathId,
+                    intersectedPointId,
+                    !intersectedPathGoesLeft);
         }
     }
 }

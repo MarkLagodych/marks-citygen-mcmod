@@ -34,7 +34,7 @@ public final class ParcelFinder {
 
             for (var crossing : roadCrossings) {
                 var intersectedRoadCrossings = allCrossings.get(crossing.intersectedPathId());
-                intersectedRoadCrossings.add(crossing.reverse(pathId));
+                intersectedRoadCrossings.add(crossing.reverse());
             }
         }
 
@@ -88,15 +88,16 @@ public final class ParcelFinder {
     //     return segments;
     // }
 
-    RoadIntersectionFinder.DirectedCrossing findCrossingAt(
+    int findCrossingAt(
             int pathId,
             int pointId,
             ArrayList<ArrayList<RoadIntersectionFinder.DirectedCrossing>> allCrossings) {
         var roadCrossings = allCrossings.get(pathId);
 
-        for (var c : roadCrossings) {
+        for (int i = 0; i < roadCrossings.size(); i++) {
+            var c = roadCrossings.get(i);
             if (c.pointId() == pointId) {
-                return c;
+                return i;
             }
         }
 
@@ -104,27 +105,37 @@ public final class ParcelFinder {
                 "Crossing not found at pathId " + pathId + " with pointId " + pointId);
     }
 
-    RoadIntersectionFinder.DirectedCrossing go(
+    DirectionPair go(
             boolean right,
-            RoadIntersectionFinder.DirectedCrossing crossing,
+            DirectionPair prevPair,
             ArrayList<ArrayList<RoadIntersectionFinder.DirectedCrossing>> allCrossings) {
 
+        var crossing = prevPair.crossing();
         var roadCrossings = allCrossings.get(crossing.intersectedPathId());
         var crossingPointId = crossing.intersectedPointId();
+        var crossingId =
+                findCrossingAt(crossing.intersectedPathId(), crossingPointId, allCrossings);
 
-        if (crossing.intersectedPathGoesLeft() ^ right) {
-            crossingPointId++;
+        var goingForward = true;
+        if (crossing.intersectedPathGoesLeft() ^ right ^ !prevPair.wentForward()) {
+            crossingId++;
         } else {
-            crossingPointId--;
+            crossingId--;
+            goingForward = false;
         }
 
-        if (crossingPointId < 0 || crossingPointId >= roadCrossings.size()) {
+        if (crossingId < 0 || crossingId >= roadCrossings.size()) {
             // FIXME
-            IO.println(crossingPointId);
-            return crossing;
+            IO.println(crossingId);
+            // return new DirectionPair(crossing.turnBack().reverse(), !goingForward);
+            throw new RuntimeException(
+                    "No crossing found at pathId "
+                            + crossing.intersectedPathId()
+                            + " with pointId "
+                            + crossingPointId);
         }
 
-        return roadCrossings.get(crossingPointId);
+        return new DirectionPair(roadCrossings.get(crossingId), goingForward);
     }
 
     public ArrayList<Parcel> findParcels() {
@@ -136,15 +147,65 @@ public final class ParcelFinder {
         var startCrossing = crossings.get(randPath).get(randCrossing);
 
         Parcel parcel = new Parcel();
-        RoadIntersectionFinder.DirectedCrossing otherCrossing;
-        int i = 0;
-        do {
-            otherCrossing = go(false, startCrossing, crossings);
+
+        try {
+
+            var c1_ = go(false, new DirectionPair(startCrossing, true), crossings);
+            var c1 = c1_.crossing();
+            var c2_ = go(false, c1_, crossings);
+            var c2 = c2_.crossing();
 
             parcel.segments.add(
-                    new Parcel.Segment(randPath, startCrossing.pointId(), otherCrossing.pointId()));
-        } while (otherCrossing != startCrossing && i++ < 100);
+                    new Parcel.Segment(
+                            startCrossing.intersectedPathId(),
+                            startCrossing.intersectedPointId(),
+                            c1.pointId()));
 
-        return new ArrayList<Parcel>(java.util.List.of(parcel));
+            parcel.segments.add(
+                    new Parcel.Segment(
+                            c1.intersectedPathId(), c1.intersectedPointId(), c2.pointId()));
+
+            var c3_ = go(false, c2_, crossings);
+            var c3 = c3_.crossing();
+
+            parcel.segments.add(
+                    new Parcel.Segment(
+                            c2.intersectedPathId(), c2.intersectedPointId(), c3.pointId()));
+
+            var c4_ = go(false, c3_, crossings);
+            var c4 = c4_.crossing();
+
+            parcel.segments.add(
+                    new Parcel.Segment(
+                            c3.intersectedPathId(), c3.intersectedPointId(), c4.pointId()));
+
+            var c5_ = go(false, c4_, crossings);
+            var c5 = c5_.crossing();
+
+            parcel.segments.add(
+                    new Parcel.Segment(
+                            c4.intersectedPathId(), c4.intersectedPointId(), c5.pointId()));
+
+            var c6_ = go(false, c5_, crossings);
+            var c6 = c6_.crossing();
+
+            parcel.segments.add(
+                    new Parcel.Segment(
+                            c5.intersectedPathId(), c5.intersectedPointId(), c6.pointId()));
+
+            var c7_ = go(false, c6_, crossings);
+            var c7 = c7_.crossing();
+
+            parcel.segments.add(
+                    new Parcel.Segment(
+                            c6.intersectedPathId(), c6.intersectedPointId(), c7.pointId()));
+
+            return new ArrayList<Parcel>(java.util.List.of(parcel));
+        } catch (RuntimeException e) {
+            IO.println("Failed to find parcel: " + e.getMessage());
+            return new ArrayList<Parcel>(java.util.List.of(parcel));
+        }
     }
+
+    record DirectionPair(RoadIntersectionFinder.DirectedCrossing crossing, boolean wentForward) {}
 }

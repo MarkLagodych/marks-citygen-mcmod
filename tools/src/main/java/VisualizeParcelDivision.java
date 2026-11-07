@@ -51,7 +51,14 @@ public class VisualizeParcelDivision extends PApplet {
         roads = gen.generateRoads(30);
         var parcelFinder = new ParcelFinder(roads, new Vec2(800, 600));
         crossings = parcelFinder.findAllCrossings();
-        parcels = parcelFinder.findParcels();
+
+        try {
+            parcels = parcelFinder.findParcels();
+        } catch (Exception e) {
+            parcels = new ArrayList<>();
+            crossings = new ArrayList<>();
+        }
+
         var time2 = System.nanoTime();
         System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");
     }
@@ -77,11 +84,30 @@ public class VisualizeParcelDivision extends PApplet {
         strokeWeight(1);
 
         for (var road : roads) {
-            var clr = 0xff000000 | (int) (Math.random() * 0xffffff);
-            stroke(clr);
+            // var clr = 0xff000000 | (int) (Math.random() * 0xffffff);
+            // stroke(clr);
             for (int i = 0; i < road.size() - 1; i++) {
                 var point = road.getPoint(i);
                 point((float) point.x, (float) point.y);
+            }
+        }
+
+        for (var parcel : parcels) {
+            for (var segment : parcel.segments) {
+                var road = roads.get(segment.pathId());
+                var startPoint = road.getPoint(segment.startPointId());
+                var endPoint = road.getPoint(segment.endPointId());
+
+                // IO.println(startPoint);
+                // IO.println(endPoint);
+
+                stroke(0x88ff0000);
+                strokeWeight(6);
+                line(
+                        (float) startPoint.x,
+                        (float) startPoint.y,
+                        (float) endPoint.x,
+                        (float) endPoint.y);
             }
         }
 
@@ -139,7 +165,7 @@ public class VisualizeParcelDivision extends PApplet {
                         segmentDirection.negate();
                     }
 
-                    stroke(0xffff0000);
+                    stroke(0xff00ff00);
                     strokeWeight(1);
                     line(
                             (float) intersectedPoint.x,
@@ -149,31 +175,13 @@ public class VisualizeParcelDivision extends PApplet {
                 }
             }
         }
-
-        for (var parcel : parcels) {
-            for (var segment : parcel.segments) {
-                var road = roads.get(segment.pathId());
-                var startPoint = road.getPoint(segment.startPointId());
-                var endPoint = road.getPoint(segment.endPointId());
-
-                IO.println(startPoint);
-                IO.println(endPoint);
-
-                stroke(0x55ffffff);
-                strokeWeight(6);
-                line(
-                        (float) startPoint.x,
-                        (float) startPoint.y,
-                        (float) endPoint.x,
-                        (float) endPoint.y);
-            }
-        }
     }
 
     @Override
     public void keyPressed() {
         if (key == 'g') {
             genRoads();
+
             redraw();
         }
 
