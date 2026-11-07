@@ -1,6 +1,8 @@
 package org.markscitygen.lib;
 
+import java.util.Arrays;
 import org.markscitygen.lib.core.Path2;
+import org.markscitygen.lib.core.Rasterizer2;
 import org.markscitygen.lib.core.Vec2;
 
 /// Searches for nearby roads in a constant radius in 2D space.
@@ -41,14 +43,23 @@ class RoadDensityChecker {
 
     /// Add a road to the density checker.
     public void add(Path2 road) {
-        for (int i = 0; i < road.size(); i++) {
-            var x = road.getX(i);
-            var y = road.getY(i);
+        var coords = new int[2 * 5]; // 5 point coordinates (x, y)
 
-            var row = getRow(y);
-            var col = getCol(x);
+        for (int i = 0; i < road.size() - 1; i++) {
+            var x0 = getCol(road.getX(i));
+            var y0 = getRow(road.getY(i));
+            var x1 = getCol(road.getX(i + 1));
+            var y1 = getRow(road.getY(i + 1));
 
-            cells[row][col] = true;
+            Arrays.fill(coords, -1);
+
+            Rasterizer2.rasterize(x0, y0, x1, y1, coords);
+
+            for (int j = 0; j < coords.length && coords[j] != -1; j += 2) {
+                var col = coords[j];
+                var row = coords[j + 1];
+                cells[row][col] = true;
+            }
         }
     }
 
