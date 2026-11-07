@@ -92,6 +92,41 @@ public final class Vec2 {
                 ak * a.y + bk * b.y + ck * c.y + dk * d.y + ek * e.y);
     }
 
+    public static Vec2 sum(
+            Vec2 a,
+            double bk,
+            Vec2 b,
+            double ck,
+            Vec2 c,
+            double dk,
+            Vec2 d,
+            double ek,
+            Vec2 e,
+            double fk,
+            Vec2 f) {
+        return new Vec2(
+                a.x + bk * b.x + ck * c.x + dk * d.x + ek * e.x + fk * f.x,
+                a.y + bk * b.y + ck * c.y + dk * d.y + ek * e.y + fk * f.y);
+    }
+
+    public static Vec2 sum(
+            double ak,
+            Vec2 a,
+            double bk,
+            Vec2 b,
+            double ck,
+            Vec2 c,
+            double dk,
+            Vec2 d,
+            double ek,
+            Vec2 e,
+            double fk,
+            Vec2 f) {
+        return new Vec2(
+                ak * a.x + bk * b.x + ck * c.x + dk * d.x + ek * e.x + fk * f.x,
+                ak * a.y + bk * b.y + ck * c.y + dk * d.y + ek * e.y + fk * f.y);
+    }
+
     public static Vec2 sum(double[] coeffs, Vec2[] vectors) {
         if (coeffs.length != vectors.length) {
             throw new IllegalArgumentException(

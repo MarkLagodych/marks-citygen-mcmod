@@ -1,34 +1,42 @@
 package org.markscitygen.lib.core;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
-/// A rasterized 2D path represented as a sequence of points with integer coordinates.
+/// A 2D path represented as a sequence of points.
 ///
-/// A path is logically devided into segments, where the i-th segment is the straight line
+/// A path is logically divided into segments, where the i-th segment is the straight line
 /// connecting the i-th point and the (i+1)-th point.
 /// Segment indexes go from 0 to {@link #size()} - 1.
 ///
 /// Calling functions that operate on segments with an invalid index or when the path
 /// has less than 2 points will throw an {@link IndexOutOfBoundsException}.
-public class RasterPath2 {
+public class Path2 {
     /// Stores sequences of x and y coordinates in the form [x0, y0, x1, y1, x2, y2, ...].
-    IntArrayList coords = new IntArrayList();
+    DoubleArrayList coords = new DoubleArrayList();
 
-    public RasterPath2() {}
+    public Path2() {}
 
-    public RasterPath2(RasterPath2 other) {
+    public Path2(Path2 other) {
         this.add(other);
     }
 
-    public RasterPath2(Vec2... points) {
+    public Path2(Vec2... points) {
         for (var point : points) {
             add(point);
         }
     }
 
-    private void addRaw(int x, int y) {
+    public void add(double x, double y) {
         coords.add(x);
         coords.add(y);
+    }
+
+    public void add(Vec2 point) {
+        add(point.x, point.y);
+    }
+
+    public void add(Path2 other) {
+        coords.addAll(other.coords);
     }
 
     public int size() {
@@ -39,11 +47,11 @@ public class RasterPath2 {
         coords.size(size << 1);
     }
 
-    public int getX(int index) {
+    public double getX(int index) {
         return coords.elements()[index << 1];
     }
 
-    public int getY(int index) {
+    public double getY(int index) {
         return coords.elements()[(index << 1) + 1];
     }
 
@@ -61,52 +69,6 @@ public class RasterPath2 {
         return getPoint(size() - 1);
     }
 
-    public void add(int x, int y) {
-        var size = size();
-
-        if (size == 0) {
-            addRaw(x, y);
-            return;
-        }
-
-        // Bresenham's line algorithm
-        var x0 = getX(size - 1);
-        var y0 = getY(size - 1);
-        var dx = Math.abs(x - x0);
-        var dy = Math.abs(y - y0);
-        var sx = x0 < x ? 1 : -1;
-        var sy = y0 < y ? 1 : -1;
-        var err = dx - dy;
-
-        if (dx == 0 && dy == 0) {
-            return;
-        }
-
-        do {
-            var err2 = 2 * err;
-
-            if (err2 > -dy) {
-                err -= dy;
-                x0 += sx;
-            }
-
-            if (err2 < dx) {
-                err += dx;
-                y0 += sy;
-            }
-
-            addRaw(x0, y0);
-        } while (!(x0 == x && y0 == y));
-    }
-
-    public void add(Vec2 point) {
-        add((int) Math.round(point.x), (int) Math.round(point.y));
-    }
-
-    public void add(RasterPath2 other) {
-        coords.addAll(other.coords);
-    }
-
     public void close() {
         if (size() > 0) {
             add(getX(0), getY(0));
@@ -119,10 +81,25 @@ public class RasterPath2 {
         return getX(0) == getX(size - 1) && getY(0) == getY(size - 1);
     }
 
+    public Vec2 getSegmentDirection(int segmentIndex) {
+        var x0 = getX(segmentIndex);
+        var y0 = getY(segmentIndex);
+        var x1 = getX(segmentIndex + 1);
+        var y1 = getY(segmentIndex + 1);
+        return new Vec2(x1 - x0, y1 - y0);
+    }
+
+    public Vec2 getLastSegmentDirection() {
+        return getSegmentDirection(segmentCount() - 1);
+    }
+
     public double getSegmentLength(int segmentIndex) {
-        // TODO should this be optimized? This only ever returns 0, 1, or sqrt(2)
-        var dx = getX(segmentIndex + 1) - getX(segmentIndex);
-        var dy = getY(segmentIndex + 1) - getY(segmentIndex);
+        var x0 = getX(segmentIndex);
+        var y0 = getY(segmentIndex);
+        var x1 = getX(segmentIndex + 1);
+        var y1 = getY(segmentIndex + 1);
+        var dx = x1 - x0;
+        var dy = y1 - y0;
         return Math.sqrt(dx * dx + dy * dy);
     }
 

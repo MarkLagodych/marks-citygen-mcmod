@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 import org.markscitygen.lib.RoadGenerator;
-import org.markscitygen.lib.core.RasterPath2;
+import org.markscitygen.lib.core.Path2;
 import org.markscitygen.lib.core.Vec2;
 import org.markscitygen.lib.tensorfield.RadialField2;
 import org.markscitygen.lib.tensorfield.RectField2;
@@ -25,7 +25,7 @@ public class VisualizeRoadGen extends PApplet {
                     .add(new RectField2(-Math.PI / 4, 0.5), new Vec2(400, 400), 150)
                     .build();
 
-    ArrayList<RasterPath2> roads;
+    ArrayList<Path2> roads;
 
     void genRoads() {
         var gen =
@@ -45,7 +45,7 @@ public class VisualizeRoadGen extends PApplet {
         roads = gen.generateRoads(30);
 
         var time2 = System.nanoTime();
-        System.out.println("Road generation time:\n" + (time2 - time1) * 1e-6 + " ms");
+        System.out.println("Road generation time: " + (time2 - time1) * 1e-6 + " ms");
     }
 
     @Override
@@ -72,6 +72,7 @@ public class VisualizeRoadGen extends PApplet {
                 var point = road.getPoint(i);
                 var nextPoint = road.getPoint(i + 1);
                 line((float) point.x, (float) point.y, (float) nextPoint.x, (float) nextPoint.y);
+                // point((float) point.x, (float) point.y);
             }
         }
     }
