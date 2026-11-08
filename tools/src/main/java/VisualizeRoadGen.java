@@ -26,7 +26,6 @@ public class VisualizeRoadGen extends PApplet {
                     .build();
 
     ArrayList<Path2> roads;
-    ArrayList<Integer> fringeIndexes;
 
     void genRoads() {
         var gen =
@@ -45,7 +44,6 @@ public class VisualizeRoadGen extends PApplet {
         var time1 = System.nanoTime();
 
         roads = gen.generateRoads(30);
-        fringeIndexes = gen.fringeIndexes;
 
         var time2 = System.nanoTime();
         System.out.println("Road generation time: " + (time2 - time1) * 1e-6 + " ms");
@@ -70,17 +68,11 @@ public class VisualizeRoadGen extends PApplet {
         stroke(0xffffffff);
         strokeWeight(2);
 
-        for (int roadId = 0; roadId < roads.size(); roadId++) {
-            var road = roads.get(roadId);
-            stroke(0xffffffff);
+        for (var road : roads) {
             for (int i = 0; i < road.size() - 1; i++) {
-                if (fringeIndexes.get(roadId) == i) {
-                    stroke(0xffff0000);
-                }
                 var point = road.getPoint(i);
                 var nextPoint = road.getPoint(i + 1);
                 line((float) point.x, (float) point.y, (float) nextPoint.x, (float) nextPoint.y);
-                // point((float) point.x, (float) point.y);
             }
         }
     }

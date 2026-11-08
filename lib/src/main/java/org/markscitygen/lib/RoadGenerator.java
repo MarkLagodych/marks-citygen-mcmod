@@ -25,8 +25,6 @@ public final class RoadGenerator {
 
     RoadIntersectionFinder intersectionFinder;
 
-    public ArrayList<Integer> fringeIndexes = new ArrayList<>();
-
     private RoadGenerator(Builder builder) {
         this.field = builder.field;
         this.bounds = builder.bounds;
@@ -180,7 +178,7 @@ public final class RoadGenerator {
 
     /// @return null if failed to generate a road (e.g. if the road is too short)
     Path2 generateRoad(RoadSeed seed, int pathId) {
-        final var path = new Path2();
+        final var path = new Path2(seed.point);
 
         final var integrator =
                 new FieldIntegrator2(
@@ -237,8 +235,6 @@ public final class RoadGenerator {
     }
 
     void continueRoad(Path2 road, int pathId, RoadSeed seed) {
-        fringeIndexes.add(road.size() - 1);
-
         if (road.isClosed()) {
             return;
         }
