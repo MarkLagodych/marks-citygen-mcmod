@@ -39,6 +39,10 @@ public final class Path2 {
         coords.addAll(other.coords);
     }
 
+    public void addSlice(Path2 other, int startIndex, int length) {
+        coords.addElements(size(), other.coords.elements(), startIndex << 1, length << 1);
+    }
+
     public int size() {
         return coords.size() >> 1;
     }
@@ -110,5 +114,21 @@ public final class Path2 {
             elements[j] = x1;
             elements[j + 1] = y1;
         }
+    }
+
+    public void insert(int index, double x, double y) {
+        coords.add(index << 1, x);
+        coords.add((index << 1) + 1, y);
+    }
+
+    public void insert(int index, Vec2 point) {
+        insert(index, point.x, point.y);
+    }
+
+    public Path2 subpath(int startIndex, int length) {
+        var subpath = new Path2();
+        subpath.addSlice(this, startIndex, length);
+
+        return subpath;
     }
 }

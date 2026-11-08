@@ -45,6 +45,9 @@ public class VisualizeRoadGen extends PApplet {
 
         roads = gen.generateRoads(30);
 
+        gen.createRoadNet(roads);
+        roads = gen.debugAtomicRoads; // FIXME remove this after debugging
+
         var time2 = System.nanoTime();
         System.out.println("Road generation time: " + (time2 - time1) * 1e-6 + " ms");
     }
@@ -69,12 +72,17 @@ public class VisualizeRoadGen extends PApplet {
         strokeWeight(2);
 
         for (var road : roads) {
+            stroke(randomColor());
             for (int i = 0; i < road.segmentCount(); i++) {
                 var point = road.getPoint(i);
                 var nextPoint = road.getPoint(i + 1);
                 line((float) point.x, (float) point.y, (float) nextPoint.x, (float) nextPoint.y);
             }
         }
+    }
+
+    static int randomColor() {
+        return (int) (Math.random() * 0xffffff) | 0xff000000;
     }
 
     @Override

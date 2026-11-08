@@ -6,6 +6,21 @@ public final class Vec2 {
     public double x;
     public double y;
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Vec2)) return false;
+
+        Vec2 other = (Vec2) obj;
+        return Double.doubleToLongBits(this.x) == Double.doubleToLongBits(other.x)
+                && Double.doubleToLongBits(this.y) == Double.doubleToLongBits(other.y);
+    }
+
+    @Override
+    public int hashCode() {
+        return Double.hashCode(x) * 31 + Double.hashCode(y);
+    }
+
+    @Override
     public String toString() {
         return String.format("[%.3f, %.3f]", x, y);
     }
@@ -142,28 +157,6 @@ public final class Vec2 {
         return new Vec2(x, y);
     }
 
-    /// This function uses {@link Math#atan2}, which is **very slow**!
-    /// @return Polar angle in radians, in the range (-π, π]
-    public double polarAngle() {
-        return Math.atan2(y, x);
-    }
-
-    public double polarCos() {
-        var l = length();
-        if (l < EPSILON) {
-            return 0;
-        }
-        return x / l;
-    }
-
-    public double polarSin() {
-        var l = length();
-        if (l < EPSILON) {
-            return 0;
-        }
-        return y / l;
-    }
-
     public double length() {
         return Math.sqrt(x * x + y * y);
     }
@@ -236,15 +229,11 @@ public final class Vec2 {
         return this.x >= min.x && this.x < max.x && this.y >= min.y && this.y < max.y;
     }
 
-    /// Rotates the vector by π/2 radians (90 degrees) counterclockwise (left).
-    public void rotateLeft() {
+    /// Rotates the vector by π/2 radians (90 degrees) clockwise.
+    public void rotatePiHalfCW() {
         var tmp = x;
         x = -y;
         y = tmp;
-    }
-
-    public Vec2 intoRotatedLeft() {
-        return new Vec2(-y, x);
     }
 
     /// @return true if the angle between `this` and `other` is in [0, π/2].
@@ -260,18 +249,6 @@ public final class Vec2 {
         if (!isAlignedWith(other)) {
             flip();
         }
-    }
-
-    public boolean looksLeftOf(Vec2 base) {
-        return this.isAlignedWith(base.intoRotatedLeft());
-    }
-
-    /// @return A number:
-    /// * `>` 0 if the points are in counterclockwise order
-    /// * `=` 0 if the points are collinear
-    /// * `<` 0 if the points are in clockwise order
-    public static double getOrientation(Vec2 p0, Vec2 p1, Vec2 p2) {
-        return (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
     }
 
     /// Finds the intersection point of two line segments (p0, p1) and (q0, q1).
@@ -296,5 +273,31 @@ public final class Vec2 {
         }
 
         return null;
+    }
+
+    /// Computes an absolute clockwise ordering value.
+    ///
+    /// Given vectors a, b, c, d which are sorted by this value ascendingly,
+    /// the rotation from a to b to c to d is clockwise.
+    ///
+    /// @return NaN if the vector is too small (length < {@link #EPSILON}).
+    public double getCWOrdering() {
+        var l = this.length();
+        if (l < EPSILON) {
+            return Double.NaN;
+        }
+
+        // Let A be the polar angle of the vector in [0, 2π).
+
+        // cos(A)
+        var cosA = x / l;
+
+        // cos(A/2) = ±√( (1 + cos(A)) / 2 )
+        var cosAHalf = Math.sqrt(0.5 + 0.5 * cosA);
+
+        // Resolve sign ambiguity of sqrt
+        cosAHalf = Math.copySign(cosAHalf, y);
+
+        return cosAHalf;
     }
 }

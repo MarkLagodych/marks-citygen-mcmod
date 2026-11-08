@@ -1,6 +1,8 @@
 package org.markscitygen.lib;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.PriorityQueue;
 import org.markscitygen.lib.core.Path2;
 import org.markscitygen.lib.core.Vec2;
@@ -42,6 +44,7 @@ public final class RoadGenerator {
         this.minorRoadDensityChecker = new RoadDensityChecker(bounds, crossingDistance);
     }
 
+    // TODO replace this with a plain Config object and reference it from RoadGenerator
     public static final class Builder {
         private final TensorField2 field;
         private Vec2 bounds = new Vec2(1000, 1000);
@@ -123,21 +126,19 @@ public final class RoadGenerator {
 
         intersectionFinder = new RoadIntersectionFinder(roads, bounds, crossingDistance);
 
-        var seeds = new PriorityQueue<RoadSeedWithPriority>();
-        var pathId = 0;
+        var seeds = new PriorityQueue<RoadSeed>();
+        var nextRoadId = 0;
 
         var completedSeeds = new ArrayList<RoadSeed>();
 
         for (int i = 0; i < initialSeedCount; i++) {
-            var seed = RoadSeed.randomInBounds(bounds);
-            seeds.add(new RoadSeedWithPriority(seed, 0));
+            seeds.add(RoadSeed.randomInBounds(bounds));
         }
 
         while (!seeds.isEmpty()) {
-            var queueItem = seeds.poll();
-            var seed = queueItem.seed;
+            var seed = seeds.poll();
 
-            var road = generateRoad(seed, pathId);
+            var road = generateRoad(seed, nextRoadId);
             if (road == null) {
                 continue;
             }
@@ -146,52 +147,43 @@ public final class RoadGenerator {
 
             completedSeeds.add(seed);
 
-            intersectionFinder.add(road, pathId);
+            intersectionFinder.add(nextRoadId);
 
-            (seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker).add(road);
+            (seed.isMinorLine() ? minorRoadDensityChecker : majorRoadDensityChecker).add(road);
 
-            placeSeeds(road, seed.isMinorLine, seeds, queueItem.priority + 1);
+            placeSeeds(road, seed.isMinorLine(), seeds, seed.priority() + 1);
 
-            pathId++;
+            nextRoadId++;
         }
 
-        for (int i = 0; i < roads.size(); i++) {
-            continueRoad(roads.get(i), i, completedSeeds.get(i));
+        for (int roadId = 0; roadId < roads.size(); roadId++) {
+            var road = roads.get(roadId);
+            var lastSegmentId = road.segmentCount() - 1;
+
+            continueRoad(road, roadId, completedSeeds.get(roadId));
+
+            intersectionFinder.add(roadId, lastSegmentId + 1);
         }
-
-        // for (var tracer : tracers) {
-        //     trimRoad(tracer);
-        // }
-        // // TODO Trim reversed roads? Find all dead ends exactly?
-
-        // for (var tracer : tracers) {
-        //     // TODO use a clearer constant for minimal point size of a trimmed road
-        //     if (tracer.path.size() < Math.ceil(minRoadLength)) {
-        //         continue;
-        //     }
-
-        //     roads.add(tracer.path);
-        // }
 
         return roads;
     }
 
     /// @return null if failed to generate a road (e.g. if the road is too short)
-    Path2 generateRoad(RoadSeed seed, int pathId) {
-        final var path = new Path2(seed.point);
+    Path2 generateRoad(RoadSeed seed, int roadId) {
+        final var path = new Path2(seed.point());
 
         final var integrator =
                 new FieldIntegrator2(
                         field,
-                        seed.isMinorLine,
+                        seed.isMinorLine(),
                         minStepSize,
                         maxStepSize,
                         integrationTolerance,
-                        seed.point,
-                        seed.growDirection);
+                        seed.point(),
+                        seed.growDirection());
 
         final var roadDensityChecker =
-                seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
+                seed.isMinorLine() ? minorRoadDensityChecker : majorRoadDensityChecker;
 
         var totalLength = 0.0;
         var wentFarFromSeed = false;
@@ -205,9 +197,9 @@ public final class RoadGenerator {
                 break;
             }
 
-            if (!wentFarFromSeed && !point.isCloseTo(seed.point, proximityThreshold)) {
+            if (!wentFarFromSeed && !point.isCloseTo(seed.point(), proximityThreshold)) {
                 wentFarFromSeed = true;
-            } else if (wentFarFromSeed && point.isCloseTo(seed.point, proximityThreshold)) {
+            } else if (wentFarFromSeed && point.isCloseTo(seed.point(), proximityThreshold)) {
                 path.close();
                 break;
             }
@@ -234,7 +226,7 @@ public final class RoadGenerator {
         return path;
     }
 
-    void continueRoad(Path2 road, int pathId, RoadSeed seed) {
+    void continueRoad(Path2 road, int roadId, RoadSeed seed) {
         if (road.isClosed()) {
             return;
         }
@@ -246,7 +238,7 @@ public final class RoadGenerator {
         final var integrator =
                 new FieldIntegrator2(
                         field,
-                        seed.isMinorLine,
+                        seed.isMinorLine(),
                         minStepSize,
                         maxStepSize,
                         integrationTolerance,
@@ -277,17 +269,26 @@ public final class RoadGenerator {
 
             totalGrowLength += growLength;
 
-            if (point.isCloseTo(seed.point, proximityThreshold)) {
+            if (point.isCloseTo(seed.point(), proximityThreshold)) {
                 road.close();
                 return;
             }
 
+            var segmentId = road.segmentCount();
+            var segmentOrigin = road.getLastPoint();
+
             var intersections = new ArrayList<RoadIntersectionFinder.Intersection>();
-            intersectionFinder.findIntersections(pathId, road.getLastPoint(), point, intersections);
+            intersectionFinder.findIntersections(
+                    roadId, segmentId, segmentOrigin, point, intersections);
 
             if (!intersections.isEmpty()) {
-                var intersection = intersections.get(intersections.size() - 1);
-                road.add(intersection.point());
+                intersections.sort(
+                        (a, b) ->
+                                Double.compare(
+                                        segmentOrigin.distanceTo(a.point()),
+                                        segmentOrigin.distanceTo(b.point())));
+
+                road.add(intersections.get(0).point());
                 return;
             }
 
@@ -297,64 +298,108 @@ public final class RoadGenerator {
         road.size(initialSize);
     }
 
-    private void placeSeeds(
-            Path2 road,
-            boolean isMinorLine,
-            PriorityQueue<RoadSeedWithPriority> seeds,
-            int priority) {
+    void placeSeeds(Path2 road, boolean isMinorLine, PriorityQueue<RoadSeed> seeds, int priority) {
 
         var length = 0.0;
 
         for (int i = 0; i < road.segmentCount(); i++) {
 
-            if (length <= 0) {
-                length = crossingDistance;
+            if (length >= crossingDistance) {
+                length = 0.0;
 
-                var seed = new RoadSeed(road.getPoint(i), !isMinorLine);
-                seeds.add(new RoadSeedWithPriority(seed, priority));
+                seeds.add(new RoadSeed(road.getPoint(i), !isMinorLine, priority));
             }
 
-            length -= road.getSegmentLength(i);
+            length += road.getSegmentLength(i);
         }
     }
 
-    /*
-    private void trimRoad(RoadTracer tracer) {
-        var path = tracer.path;
+    public RoadNet createRoadNet(ArrayList<Path2> roads) {
+        // Intersection point -> Road ID
+        var intersectionNeighbourhoods = new HashMap<Vec2, IntArrayList>(roads.size());
 
-        if (path.isClosed()) {
-            return;
+        // Road ID -> Intersections on that road
+        var allIntersections =
+                new ArrayList<ArrayList<RoadIntersectionFinder.Intersection>>(roads.size());
+
+        for (int roadId = 0; roadId < roads.size(); roadId++) {
+            allIntersections.add(new ArrayList<>());
         }
 
-        var intersection = intersectionFinder.findLastIntersection(path, tracer.pathId);
+        for (int roadId = 0; roadId < roads.size(); roadId++) {
+            var intersections = allIntersections.get(roadId);
+            intersectionFinder.findAllIntersections(roadId, intersections);
 
-        if (intersection != null) {
-            path.size(intersection.pointIndex() + 1);
+            for (var intersection : intersections) {
+                intersectionNeighbourhoods.put(intersection.point(), new IntArrayList());
 
-            // TODO do we need this?
-            // path.add(intersection.pointX(), intersection.pointY());
-
-        } else {
-            path.size(0);
+                allIntersections.get(intersection.intersectedPathId()).add(intersection.reverse());
+            }
         }
+
+        for (int roadId = 0; roadId < roads.size(); roadId++) {
+            var road = roads.get(roadId);
+            var intersections = allIntersections.get(roadId);
+
+            intersections.sort(
+                    (a, b) -> {
+                        int cmp = Integer.compare(a.segmentId(), b.segmentId());
+                        if (cmp != 0) return cmp;
+
+                        var segmentOrigin = road.getPoint(a.segmentId());
+                        return Double.compare(
+                                segmentOrigin.distanceSquaredTo(a.point()),
+                                segmentOrigin.distanceSquaredTo(b.point()));
+                    });
+        }
+
+        for (int roadId = 0; roadId < roads.size(); roadId++) {
+            var road = roads.get(roadId);
+            var intersections = allIntersections.get(roadId);
+
+            for (var intersection : intersections.reversed()) {
+                road.insert(intersection.segmentId(), intersection.point());
+            }
+        }
+
+        var atomicRoads = new ArrayList<Path2>(roads.size());
+
+        for (var road : roads) {
+            var startPointId = 0;
+            for (int pointId = 1; pointId < road.size(); pointId++) {
+                var point = road.getPoint(pointId);
+                if (intersectionNeighbourhoods.containsKey(point) || pointId == road.size() - 1) {
+                    atomicRoads.add(road.subpath(startPointId, pointId - startPointId + 1));
+                    startPointId = pointId;
+                }
+            }
+        }
+
+        /*
+        for (var atomicRoad : atomicRoads) {
+            var startPoint = atomicRoad.getPoint(0);
+            var endPoint = atomicRoad.getLastPoint();
+
+            if (intersectionNeighbourhoods.containsKey(startPoint)) {
+                intersectionNeighbourhoods.get(startPoint).add(atomicRoads.indexOf(atomicRoad));
+            }
+            if (intersectionNeighbourhoods.containsKey(endPoint)) {
+                intersectionNeighbourhoods.get(endPoint).add(atomicRoads.indexOf(atomicRoad));
+            }
+        }
+
+        for (var entry : intersectionNeighbourhoods.entrySet()) {
+            var center = entry.getKey();
+            var neighbours = entry.getValue();
+
+            // TODO sort neighbours by angle around center and find out the left/right neighbours
+        }
+             */
+
+        debugAtomicRoads = atomicRoads;
+
+        return null; // TODO Add this later
     }
-        */
 
-    static final class RoadSeedWithPriority implements Comparable<RoadSeedWithPriority> {
-        final RoadSeed seed;
-
-        /// Low priority = grows later.
-        /// High priority = grows sooner.
-        final int priority;
-
-        RoadSeedWithPriority(RoadSeed seed, int priority) {
-            this.seed = seed;
-            this.priority = priority;
-        }
-
-        @Override
-        public int compareTo(RoadSeedWithPriority other) {
-            return -Integer.compare(priority, other.priority);
-        }
-    }
+    public ArrayList<Path2> debugAtomicRoads; // FIXME remove this after debugging
 }

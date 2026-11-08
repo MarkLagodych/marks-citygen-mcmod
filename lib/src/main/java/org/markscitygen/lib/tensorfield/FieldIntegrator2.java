@@ -49,7 +49,7 @@ public final class FieldIntegrator2 {
         var dir = field.getTensorAt(point).getMajorEigenvector();
 
         // The minor eigenvector is perpendicular to the major eigenvector
-        if (useMinorDirection) dir.rotateLeft();
+        if (useMinorDirection) dir.rotatePiHalfCW();
 
         dir.alignWith(prevDirection);
 
