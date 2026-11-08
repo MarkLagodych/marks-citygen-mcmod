@@ -1,6 +1,5 @@
 package org.markscitygen.lib;
 
-import java.util.Arrays;
 import org.markscitygen.lib.core.Path2;
 import org.markscitygen.lib.core.Rasterizer2;
 import org.markscitygen.lib.core.Vec2;
@@ -19,8 +18,6 @@ class RoadDensityChecker {
 
     private final double coordToCellIndex;
 
-    private final int rows;
-    private final int cols;
     private final boolean[][] cells;
 
     public RoadDensityChecker(Vec2 bounds, double radius) {
@@ -28,8 +25,8 @@ class RoadDensityChecker {
 
         this.coordToCellIndex = 1.0 / cellSize;
 
-        this.rows = (int) Math.ceil(bounds.y * coordToCellIndex) + 2 * CELL_PADDING;
-        this.cols = (int) Math.ceil(bounds.x * coordToCellIndex) + 2 * CELL_PADDING;
+        var rows = (int) Math.ceil(bounds.y * coordToCellIndex) + 2 * CELL_PADDING;
+        var cols = (int) Math.ceil(bounds.x * coordToCellIndex) + 2 * CELL_PADDING;
         this.cells = new boolean[rows][cols];
     }
 
@@ -51,14 +48,12 @@ class RoadDensityChecker {
             var x1 = getCol(road.getX(i + 1));
             var y1 = getRow(road.getY(i + 1));
 
-            Arrays.fill(coords, -1);
+            int numPoints = Rasterizer2.rasterize(x0, y0, x1, y1, coords);
 
-            Rasterizer2.rasterize(x0, y0, x1, y1, coords);
-
-            for (int j = 0; j < coords.length && coords[j] != -1; j += 2) {
-                var col = coords[j];
-                var row = coords[j + 1];
-                cells[row][col] = true;
+            for (int j = 0; j < numPoints * 2; j += 2) {
+                var x = coords[j];
+                var y = coords[j + 1];
+                cells[y][x] = true;
             }
         }
     }

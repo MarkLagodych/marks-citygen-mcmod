@@ -39,7 +39,7 @@ public final class STTensor2 {
     /// Constructs a tensor from its major (primary) direction.
     public static STTensor2 fromMajorEigenvector(Vec2 vector) {
         var l = vector.length();
-        if (l < Vec2.LENGTH_EPSILON) {
+        if (l < Vec2.EPSILON) {
             return new STTensor2(0, 0);
         }
 
@@ -59,7 +59,7 @@ public final class STTensor2 {
     /// Gets the major (primary) direction of the tensor.
     public Vec2 getMajorEigenvector() {
         var l = xy.length();
-        if (l < Vec2.LENGTH_EPSILON) {
+        if (l < Vec2.EPSILON) {
             return new Vec2(0, 0);
         }
 

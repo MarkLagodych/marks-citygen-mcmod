@@ -9,7 +9,9 @@ public final class Rasterizer2 {
     /// or the array is full.
     /// The length of the array must be even.
     /// Unused elements are left untouched.
-    public static void rasterize(int x0, int y0, int x1, int y1, int outCoords[]) {
+    ///
+    /// @return The number of points written to the output array.
+    public static int rasterize(int x0, int y0, int x1, int y1, int[] outCoords) {
         // Bresenham's line algorithm
         int dx = Math.abs(x1 - x0);
         int dy = Math.abs(y1 - y0);
@@ -36,5 +38,31 @@ public final class Rasterizer2 {
                 y0 += sy;
             }
         }
+
+        return i / 2;
+    }
+
+    /// Bad for long lines! Slow but accurate!
+    public static int rasterizeAccurate(Vec2 start, Vec2 end, int[] outCoords) {
+        // DDA line algorithm
+        var dx = end.x - start.x;
+        var dy = end.y - start.y;
+        var steps = (int) Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)));
+        var xIncrement = dx / steps;
+        var yIncrement = dy / steps;
+        var x = start.x;
+        var y = start.y;
+        var i = 0;
+
+        for (int j = 0; j < steps; j++) {
+            if (i + 2 < outCoords.length) {
+                outCoords[i++] = (int) Math.round(x);
+                outCoords[i++] = (int) Math.round(y);
+            }
+            x += xIncrement;
+            y += yIncrement;
+        }
+
+        return i / 2;
     }
 }

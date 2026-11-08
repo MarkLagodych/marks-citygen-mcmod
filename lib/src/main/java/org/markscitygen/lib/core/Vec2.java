@@ -1,7 +1,7 @@
 package org.markscitygen.lib.core;
 
 public final class Vec2 {
-    public static double LENGTH_EPSILON = 1e-10;
+    public static double EPSILON = 1e-10;
 
     public double x;
     public double y;
@@ -150,7 +150,7 @@ public final class Vec2 {
 
     public double polarCos() {
         var l = length();
-        if (l < LENGTH_EPSILON) {
+        if (l < EPSILON) {
             return 0;
         }
         return x / l;
@@ -158,7 +158,7 @@ public final class Vec2 {
 
     public double polarSin() {
         var l = length();
-        if (l < LENGTH_EPSILON) {
+        if (l < EPSILON) {
             return 0;
         }
         return y / l;
@@ -187,13 +187,19 @@ public final class Vec2 {
         this.y *= scalar;
     }
 
-    public void negate() {
+    public void flip() {
         this.x = -this.x;
         this.y = -this.y;
     }
 
+    /// Performs the dot product.
     public double dot(Vec2 other) {
         return this.x * other.x + this.y * other.y;
+    }
+
+    /// Performs the 2D cross product.
+    public double cross(Vec2 other) {
+        return this.x * other.y - this.y * other.x;
     }
 
     public Vec2 offsetWith(Vec2 direction) {
@@ -246,17 +252,49 @@ public final class Vec2 {
         return this.dot(other) >= 0;
     }
 
-    /// Either negates `this` vector or does nothing.
+    /// Either flips `this` vector or does nothing.
     /// The resulting angle between `this` and `other` is in [0, π/2].
     ///
     /// @see #isAlignedWith()
     public void alignWith(Vec2 other) {
         if (!isAlignedWith(other)) {
-            negate();
+            flip();
         }
     }
 
     public boolean looksLeftOf(Vec2 base) {
         return this.isAlignedWith(base.intoRotatedLeft());
+    }
+
+    /// @return A number:
+    /// * `>` 0 if the points are in counterclockwise order
+    /// * `=` 0 if the points are collinear
+    /// * `<` 0 if the points are in clockwise order
+    public static double getOrientation(Vec2 p0, Vec2 p1, Vec2 p2) {
+        return (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
+    }
+
+    /// Finds the intersection point of two line segments (p0, p1) and (q0, q1).
+    /// @return null if there is no intersection.
+    public static Vec2 getIntersectionPoint(Vec2 p0, Vec2 p1, Vec2 q0, Vec2 q1) {
+        var p = p0.directionTo(p1);
+        var q = q0.directionTo(q1);
+        var d = p0.directionTo(q0);
+
+        var pq = p.cross(q);
+
+        if (Math.abs(pq) < EPSILON) {
+            // Lines are parallel or collinear
+            return null;
+        }
+
+        var t = d.cross(q) / pq;
+        var u = d.cross(p) / pq;
+
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+            return Vec2.sum(p0, t, p);
+        }
+
+        return null;
     }
 }

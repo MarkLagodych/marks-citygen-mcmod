@@ -13,7 +13,9 @@ public final class RoadGenerator {
 
     final TensorField2 field;
     final Vec2 bounds;
-    final double stepSize;
+    final double minStepSize;
+    final double maxStepSize;
+    final double integrationTolerance;
     final int maxPoints;
     final double crossingDistance;
     final double minRoadLength;
@@ -21,11 +23,17 @@ public final class RoadGenerator {
     final double minGrowLength;
     final double proximityThreshold;
 
+    RoadIntersectionFinder intersectionFinder;
+
+    public ArrayList<Integer> fringeIndexes = new ArrayList<>();
+
     private RoadGenerator(Builder builder) {
         this.field = builder.field;
         this.bounds = builder.bounds;
         this.maxPoints = builder.maxPoints;
-        this.stepSize = builder.stepSize;
+        this.minStepSize = builder.minStepSize;
+        this.maxStepSize = builder.maxStepSize;
+        this.integrationTolerance = builder.integrationTolerance;
         this.maxRoadLength = builder.maxRoadLength;
         this.minRoadLength = builder.minRoadLength;
         this.minGrowLength = builder.minGrowLength;
@@ -40,7 +48,9 @@ public final class RoadGenerator {
         private final TensorField2 field;
         private Vec2 bounds = new Vec2(1000, 1000);
         private int maxPoints = 10000;
-        private double stepSize = 0.5;
+        private double minStepSize = 0.1;
+        private double maxStepSize = 1.0;
+        private double integrationTolerance = 0.01;
         private double minRoadLength = 10;
         private double maxRoadLength = 1000;
         private double minGrowLength = 0.03;
@@ -62,9 +72,15 @@ public final class RoadGenerator {
             return this;
         }
 
-        /// Road growth step size
-        public Builder stepSize(double stepSize) {
-            this.stepSize = stepSize;
+        /// The minimum and maximum step sizes for road growth
+        public Builder stepSize(double minStepSize, double maxStepSize) {
+            this.minStepSize = minStepSize;
+            this.maxStepSize = maxStepSize;
+            return this;
+        }
+
+        public Builder integrationTolerance(double integrationTolerance) {
+            this.integrationTolerance = integrationTolerance;
             return this;
         }
 
@@ -106,8 +122,13 @@ public final class RoadGenerator {
 
     public ArrayList<Path2> generateRoads(int initialSeedCount) {
         var roads = new ArrayList<Path2>();
+
+        intersectionFinder = new RoadIntersectionFinder(roads, bounds, crossingDistance);
+
         var seeds = new PriorityQueue<RoadSeedWithPriority>();
         var pathId = 0;
+
+        var completedSeeds = new ArrayList<RoadSeed>();
 
         for (int i = 0; i < initialSeedCount; i++) {
             var seed = RoadSeed.randomInBounds(bounds);
@@ -123,20 +144,22 @@ public final class RoadGenerator {
                 continue;
             }
 
-            pathId++;
-
             roads.add(road);
 
-            // intersectionFinder.add(tracer.path, tracer.pathId);
+            completedSeeds.add(seed);
+
+            intersectionFinder.add(road, pathId);
 
             (seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker).add(road);
 
             placeSeeds(road, seed.isMinorLine, seeds, queueItem.priority + 1);
+
+            pathId++;
         }
 
-        // for (var tracer : tracers) {
-        //     continueRoad(tracer);
-        // }
+        for (int i = 0; i < roads.size(); i++) {
+            continueRoad(roads.get(i), i, completedSeeds.get(i));
+        }
 
         // for (var tracer : tracers) {
         //     trimRoad(tracer);
@@ -161,7 +184,13 @@ public final class RoadGenerator {
 
         final var integrator =
                 new FieldIntegrator2(
-                        field, seed.isMinorLine, 0.01, 30, 0.00001, seed.point, seed.growDirection);
+                        field,
+                        seed.isMinorLine,
+                        minStepSize,
+                        maxStepSize,
+                        integrationTolerance,
+                        seed.point,
+                        seed.growDirection);
 
         final var roadDensityChecker =
                 seed.isMinorLine ? minorRoadDensityChecker : majorRoadDensityChecker;
@@ -207,18 +236,30 @@ public final class RoadGenerator {
         return path;
     }
 
-    /*
-    void continueRoad(RoadTracer tracer) {
-        var totalGrowLength = 0.0;
+    void continueRoad(Path2 road, int pathId, RoadSeed seed) {
+        fringeIndexes.add(road.size() - 1);
 
-        final var initialSize = tracer.path.size();
-
-        if (tracer.path.isClosed()) {
+        if (road.isClosed()) {
             return;
         }
 
+        var totalGrowLength = 0.0;
+
+        final var initialSize = road.size();
+
+        final var integrator =
+                new FieldIntegrator2(
+                        field,
+                        seed.isMinorLine,
+                        minStepSize,
+                        maxStepSize,
+                        integrationTolerance,
+                        road.getLastPoint(),
+                        road.getLastSegmentDirection());
+
         for (; ; ) {
-            final var point = tracer.nextPoint();
+            integrator.calculateNextPoint();
+            final var point = integrator.nextPoint();
 
             if (point == null) {
                 break;
@@ -228,39 +269,37 @@ public final class RoadGenerator {
                 break;
             }
 
-            if (totalGrowLength + tracer.growLength >= crossingDistance) {
+            var growLength = integrator.nextDirection().length();
+
+            if (growLength < minGrowLength) {
                 break;
             }
 
-            totalGrowLength += tracer.growLength;
+            if (totalGrowLength + growLength >= crossingDistance) {
+                break;
+            }
 
-            // This is also the index of the first point generated in this iteration
-            final var sizeBeforeAdd = tracer.path.size();
+            totalGrowLength += growLength;
 
-            tracer.acceptPoint();
-
-            if (point.isCloseTo(tracer.seedPoint, proximityThreshold)) {
-                tracer.path.close();
+            if (point.isCloseTo(seed.point, proximityThreshold)) {
+                road.close();
                 return;
             }
 
-            var intersection =
-                    intersectionFinder.findFirstIntersection(
-                            tracer.path, sizeBeforeAdd, tracer.pathId);
+            var intersections = new ArrayList<RoadIntersectionFinder.Intersection>();
+            intersectionFinder.findIntersections(pathId, road.getLastPoint(), point, intersections);
 
-            if (intersection != null) {
-                tracer.path.size(intersection.pointIndex() + 1);
-
-                // TODO do we need this?
-                // tracer.path.add(intersection.pointX(), intersection.pointY());
-
+            if (!intersections.isEmpty()) {
+                var intersection = intersections.get(intersections.size() - 1);
+                road.add(intersection.point());
                 return;
             }
+
+            road.add(point);
         }
 
-        tracer.path.size(initialSize);
+        road.size(initialSize);
     }
-        */
 
     private void placeSeeds(
             Path2 road,
