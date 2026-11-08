@@ -10,9 +10,9 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 ///
 /// Calling functions that operate on segments with an invalid index or when the path
 /// has less than 2 points will throw an {@link IndexOutOfBoundsException}.
-public class Path2 {
+public final class Path2 {
     /// Stores sequences of x and y coordinates in the form [x0, y0, x1, y1, x2, y2, ...].
-    DoubleArrayList coords = new DoubleArrayList();
+    final DoubleArrayList coords = new DoubleArrayList();
 
     public Path2() {}
 
@@ -82,11 +82,9 @@ public class Path2 {
     }
 
     public Vec2 getSegmentDirection(int segmentIndex) {
-        var x0 = getX(segmentIndex);
-        var y0 = getY(segmentIndex);
-        var x1 = getX(segmentIndex + 1);
-        var y1 = getY(segmentIndex + 1);
-        return new Vec2(x1 - x0, y1 - y0);
+        var p0 = getPoint(segmentIndex);
+        var p1 = getPoint(segmentIndex + 1);
+        return p0.directionTo(p1);
     }
 
     public Vec2 getLastSegmentDirection() {
@@ -94,13 +92,7 @@ public class Path2 {
     }
 
     public double getSegmentLength(int segmentIndex) {
-        var x0 = getX(segmentIndex);
-        var y0 = getY(segmentIndex);
-        var x1 = getX(segmentIndex + 1);
-        var y1 = getY(segmentIndex + 1);
-        var dx = x1 - x0;
-        var dy = y1 - y0;
-        return Math.sqrt(dx * dx + dy * dy);
+        return getSegmentDirection(segmentIndex).length();
     }
 
     public void reverse() {

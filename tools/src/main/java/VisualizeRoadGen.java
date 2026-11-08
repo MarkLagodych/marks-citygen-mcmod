@@ -34,10 +34,10 @@ public class VisualizeRoadGen extends PApplet {
                         .maxPoints(1200)
                         .stepSize(0.01, 30.0)
                         .integrationTolerance(0.00001)
-                        .minRoadLength(30.0)
+                        .minRoadLength(40.0)
                         .maxRoadLength(600)
                         .minGrowLength(0.1)
-                        .crossingDistance(30.0)
+                        .crossingDistance(40.0)
                         .proximityThreshold(2.0)
                         .build();
 
@@ -69,7 +69,7 @@ public class VisualizeRoadGen extends PApplet {
         strokeWeight(2);
 
         for (var road : roads) {
-            for (int i = 0; i < road.size() - 1; i++) {
+            for (int i = 0; i < road.segmentCount(); i++) {
                 var point = road.getPoint(i);
                 var nextPoint = road.getPoint(i + 1);
                 line((float) point.x, (float) point.y, (float) nextPoint.x, (float) nextPoint.y);

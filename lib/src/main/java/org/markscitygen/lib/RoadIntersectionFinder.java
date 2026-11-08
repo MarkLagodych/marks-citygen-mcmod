@@ -7,8 +7,7 @@ import org.markscitygen.lib.core.Vec2;
 public final class RoadIntersectionFinder {
     private static final int CELL_PADDING = 1;
 
-    // TODO Benchmark what coefficient is the best for performance.
-    private static final double CROSSING_DISTANCE_TO_CELL_SIZE = 1. / 2;
+    private static final double CROSSING_DISTANCE_TO_CELL_SIZE = 1. / 4;
 
     final ArrayList<Path2> roads;
     final Cell[][] cells;
@@ -36,30 +35,46 @@ public final class RoadIntersectionFinder {
     public void add(Path2 road, int pathId) {
         var startSegmentId = 0;
 
-        for (int i = 0; i < road.segmentCount(); i++) {
-            var col0 = getCol(road.getX(i));
-            var row0 = getRow(road.getY(i));
-            var col1 = getCol(road.getX(i + 1));
-            var row1 = getRow(road.getY(i + 1));
+        for (int currentSegmentId = 0; currentSegmentId < road.segmentCount(); currentSegmentId++) {
+            var col0 = getCol(road.getX(currentSegmentId));
+            var row0 = getRow(road.getY(currentSegmentId));
+            var col1 = getCol(road.getX(currentSegmentId + 1));
+            var row1 = getRow(road.getY(currentSegmentId + 1));
 
             var sameCell = col0 == col1 && row0 == row1;
-            var isLast = i == road.segmentCount() - 1;
+            var isLast = currentSegmentId == road.segmentCount() - 1;
 
             if (sameCell && !isLast) {
                 continue;
             }
 
-            add(pathId, startSegmentId, i, row0, col0);
+            addRecordToCell(pathId, startSegmentId, currentSegmentId, row0, col0);
+            startSegmentId = currentSegmentId;
 
-            if (!sameCell && isLast) {
-                add(pathId, i, i, row1, col1);
+            if (!sameCell) {
+                var minRow = Math.min(row0, row1);
+                var maxRow = Math.max(row0, row1);
+                var minCol = Math.min(col0, col1);
+                var maxCol = Math.max(col0, col1);
+
+                for (int row = minRow; row <= maxRow; row++) {
+                    for (int col = minCol; col <= maxCol; col++) {
+                        if ((row == row0 && col == col0) || (row == row1 && col == col1)) {
+                            continue;
+                        }
+
+                        addRecordToCell(pathId, currentSegmentId, currentSegmentId, row, col);
+                    }
+                }
+
+                if (isLast) {
+                    addRecordToCell(pathId, currentSegmentId, currentSegmentId, row1, col1);
+                }
             }
-
-            startSegmentId = i;
         }
     }
 
-    void add(int pathId, int firstSegmentId, int lastSegmentId, int row, int col) {
+    void addRecordToCell(int pathId, int firstSegmentId, int lastSegmentId, int row, int col) {
         var cell = cells[row][col];
 
         if (cell == null) {
@@ -90,14 +105,16 @@ public final class RoadIntersectionFinder {
                     continue;
                 }
 
-                findIntersections(cell, pathId, p0, p1, outIntersections);
+                findIntersectionsInCell(cell, pathId, p0, p1, outIntersections);
             }
         }
     }
 
-    void findIntersections(
+    void findIntersectionsInCell(
             Cell cell, int pathId, Vec2 p0, Vec2 p1, ArrayList<Intersection> outIntersections) {
+
         for (var record : cell.records) {
+
             if (record.pathId == pathId) {
                 continue;
             }
