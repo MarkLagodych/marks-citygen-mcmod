@@ -10,6 +10,10 @@ import org.markscitygen.lib.tensorfield.FieldIntegrator2;
 import org.markscitygen.lib.tensorfield.TensorField2;
 
 public final class RoadGenerator {
+    /// Used to slightly extend the road continuation segment to avoid numerical issues with
+    // intersection detection
+    private static final double CONTINUATION_EXTENSION_FACTOR = 1.0001;
+
     final RoadDensityChecker majorRoadDensityChecker;
     final RoadDensityChecker minorRoadDensityChecker;
 
@@ -288,7 +292,13 @@ public final class RoadGenerator {
                                         segmentOrigin.distanceTo(a.point()),
                                         segmentOrigin.distanceTo(b.point())));
 
-                road.add(intersections.get(0).point());
+                var p = intersections.get(0).point();
+
+                p.sub(segmentOrigin);
+                p.mul(CONTINUATION_EXTENSION_FACTOR);
+                p.add(segmentOrigin);
+
+                road.add(p);
                 return;
             }
 
@@ -358,7 +368,7 @@ public final class RoadGenerator {
             var intersections = allIntersections.get(roadId);
 
             for (var intersection : intersections.reversed()) {
-                road.insert(intersection.segmentId(), intersection.point());
+                road.insert(intersection.segmentId() + 1, intersection.point());
             }
         }
 

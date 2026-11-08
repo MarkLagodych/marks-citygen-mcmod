@@ -69,7 +69,7 @@ public class VisualizeRoadGen extends PApplet {
         fill(0xffffffff);
 
         stroke(0xffffffff);
-        strokeWeight(2);
+        strokeWeight(5);
 
         for (var road : roads) {
             stroke(randomColor());
